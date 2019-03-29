@@ -51,7 +51,7 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
     """
     words = pd.read_csv('/data1/minh/multimodal/img_embedding.txt', sep=' ', header=None).values
     # save all words in a txt file 
-    np.savetxt('/data1/minh/multimodal/words.txt', words[:,0], fmt="%s")
+    np.savetxt('~/data/words.txt', words[:,0], fmt="%s")
     word_dict = Magnitude(word_magnitude_file)
     #img_dict = Magnitude('/data1/embeddings/pymagnitude/image.magnitude')
     img_dict = Magnitude(image_magnitude_file)
