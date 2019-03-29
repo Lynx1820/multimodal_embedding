@@ -43,6 +43,7 @@ def create_image_embedding(folder_name):
                 break
     print("Done average pooling")
 
+# 
 def create_train_set(word_magnitude_file,image_magnitude_file):
     """
     create the train set (x_train, y_train)
@@ -93,4 +94,6 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
 #folder with image vectors: '/data1/minh/data'
 #current folder with sample fasttext: '~/data/fasttext_sample.magnitude'
 #folder with image magnitude: '/data1/mihn/magnitude/image.magnitude'
+word_magnitude_file = '~/data/fasttext_sample.magnitude'
+image_magnitude_file = '/data1/mihn/magnitude/image.magnitude'
 create_train_set(word_magnitude_file,image_magnitude_file)
