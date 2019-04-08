@@ -100,5 +100,5 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
 #current folder with sample fasttext: '~/data/fasttext_sample.magnitude'
 #folder with image magnitude: '/data1/mihn/magnitude/image.magnitude'
 word_magnitude_file = '../data/fasttext_sample.magnitude'
-image_magnitude_file = '/data1/mihn/magnitude/image.magnitude'
+image_magnitude_file = '/data1/minh/magnitude/image.magnitude'
 create_train_set(word_magnitude_file,image_magnitude_file)
