@@ -50,8 +50,8 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
     @return x_train, y_train
     """
     words = pd.read_csv('/data1/minh/multimodal/img_embedding.txt', sep=' ', header=None).values
-    # save all words in a txt file 
-   #np.savetxt('/home/dkeren/data/words.txt', words[:,0], fmt="%s")
+    # save all words in a txt file k
+    np.savetxt('~/data/words.txt', words[:,0], fmt="%s")
     word_dict = Magnitude(word_magnitude_file)
     #img_dict = Magnitude('/data1/embeddings/pymagnitude/image.magnitude')
     img_dict = Magnitude(image_magnitude_file)
@@ -61,6 +61,7 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
     # query for processed words' embeddings
     for i in range(words.shape[0]):
         unprocessed_word = words[i][0]
+        print(unprocessed_word)
         # convert word, e.g row-writings to writings 
         if "row" in words[i][0]:
             phrase = words[i][0].split('-')[1]
@@ -73,11 +74,15 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
                     word += " "
             phrase = word 
         
-        with open('~/data/words_processed.txt', 'a') as f:
+        with open('../data/words_processed.txt', 'a') as f:
             f.write("{}\n".format(phrase))
-        word_embedding = word_dict.query(phrase)
+        word_embedding = word_dict.query(phrase) #query word embedding for image word
+        check_nan = np.isnan(word_embedding)
+        all_nan = check_nan[check_nan==True].shape[0] #number of nans
+        if all_nan == word_embedding.shape[0]: print(phrase) 
         img_embedding = img_dict.query(unprocessed_word)
-
+        check_nan = np.isnan(img_embedding)
+        all_nan = check_nan[check_nan==True].shape[0]
         # check if a word has valid image vectors 
         # valid: image vectors doesn't contain all NaNs
         # check_nan = np.isnan(img_embedding)
@@ -85,9 +90,9 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
         # if all_nan == img_embedding.shape[0]:
             
         # add to x_train and y_train
-        with open('~/data/x_train.txt', 'a') as f:
+        with open('../data/x_train1.txt', 'a') as f:
             np.savetxt(f, word_embedding.reshape(1, word_embedding.shape[0]))
-        with open('~/data/y_train.txt', 'a') as f:
+        with open('../data/y_train1.txt', 'a') as f:
             np.savetxt(f, img_embedding.reshape(1, img_embedding.shape[0]))
 
 #create_image_embedding(folder_name)
@@ -95,5 +100,5 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
 #current folder with sample fasttext: '~/data/fasttext_sample.magnitude'
 #folder with image magnitude: '/data1/mihn/magnitude/image.magnitude'
 word_magnitude_file = '~/data/fasttext_sample.magnitude'
-image_magnitude_file = '/data1/minh/magnitude/image.magnitude'
+image_magnitude_file = '~/data1/mihn/magnitude/image.magnitude'
 create_train_set(word_magnitude_file,image_magnitude_file)
