@@ -61,7 +61,6 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
     # query for processed words' embeddings
     for i in range(words.shape[0]):
         unprocessed_word = words[i][0]
-        print(unprocessed_word)
         # convert word, e.g row-writings to writings 
         if "row" in words[i][0]:
             phrase = words[i][0].split('-')[1]
@@ -79,7 +78,7 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
         word_embedding = word_dict.query(phrase) #query word embedding for image word
         check_nan = np.isnan(word_embedding)
         all_nan = check_nan[check_nan==True].shape[0] #number of nans
-        if all_nan == word_embedding.shape[0]: print(phrase)
+        if all_nan == word_embedding.shape[0]: print("Nan: " + phrase)
         img_embedding = img_dict.query(unprocessed_word)
         check_nan = np.isnan(img_embedding)
         all_nan = check_nan[check_nan==True].shape[0]
