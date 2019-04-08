@@ -51,7 +51,7 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
     """
     words = pd.read_csv('/data1/minh/multimodal/img_embedding.txt', sep=' ', header=None).values
     # save all words in a txt file k
-    np.savetxt('~/data/words.txt', words[:,0], fmt="%s")
+    np.savetxt('../data/words.txt', words[:,0], fmt="%s")
     word_dict = Magnitude(word_magnitude_file)
     #img_dict = Magnitude('/data1/embeddings/pymagnitude/image.magnitude')
     img_dict = Magnitude(image_magnitude_file)
@@ -79,7 +79,7 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
         word_embedding = word_dict.query(phrase) #query word embedding for image word
         check_nan = np.isnan(word_embedding)
         all_nan = check_nan[check_nan==True].shape[0] #number of nans
-        if all_nan == word_embedding.shape[0]: print(phrase) 
+        if all_nan == word_embedding.shape[0]: print(phrase)
         img_embedding = img_dict.query(unprocessed_word)
         check_nan = np.isnan(img_embedding)
         all_nan = check_nan[check_nan==True].shape[0]
