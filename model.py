@@ -13,6 +13,7 @@ from keras.models import load_model
 from argparse import ArgumentParser
 import pandas as pd
 import pickle
+import timeit
 
 class MultimodalEmbedding:
     """
@@ -49,11 +50,15 @@ class MultimodalEmbedding:
             self.build_neural_net()
         else:
             # TODO: edit error message
-            printf("model: linear/neural")
+            print("model: linear/neural")
         
         print("Training initialized...")
+        start = timeit.timeit()
         history = self.model.fit(self.x_train, self.y_train, epochs=self.args.e, verbose=1)
+        end = timeit.timeit()
         print("Training complete")
+        training_time = end - start
+        print("Training Time: %f" + training_time )
 
         try:
             self.model.save(self.args.s+'.h5')
@@ -115,6 +120,8 @@ def main():
     
     x_train = pd.read_csv("/data1/minh/multimodal/x_train.txt", sep=" ", header=None)
     y_train = pd.read_csv("/data1/minh/multimodal/y_train.txt", sep=" ", header=None)
+    #x_train = pd.read_csv("../data/x_train.txt", sep=" ", header=None)
+    #y_train = pd.read_csv("/data1/minh/multimodal/y_train.txt", sep=" ", header=None)
     print("Done loading x_train and y_train")
     model = MultimodalEmbedding(x_train, y_train, args)
     
