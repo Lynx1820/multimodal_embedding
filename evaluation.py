@@ -92,8 +92,7 @@ def evaluate_all(eval_set_list, word_dict, dict_format):
     @param word_dict: corresponding dictionary: keys: all words, values: predicted embeddings 
     @param dict_format: format of dictionary, 'dict' (normal dictionary) or 'magnitude' (magnitude object)
     """  
-    print("Evaluation List Used: ")
-    print(eval_set_list)
+    print("Evaluation List Used: wordsim_sim, wordsim_rel, simlex, men")
     for i in range(len(eval_set_list)):
         if dict_format == 'dict':
             model_sim = compute_sim(eval_set_list[i], word_dict)
