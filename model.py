@@ -58,7 +58,7 @@ class MultimodalEmbedding:
         end = timeit.timeit()
         print("Training complete")
         training_time = end - start
-        print("Training Time: %f" + training_time )
+        print("Training Time: %f" % training_time )
 
         try:
             self.model.save(self.args.s+'.h5')
