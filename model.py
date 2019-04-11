@@ -118,9 +118,9 @@ def main():
     if args.s == None and args.l == None:
         raise Exception("Either save or load a model")
     
-    x_train = pd.read_csv("/data1/minh/multimodal/x_train.txt", sep=" ", header=None)
+    #x_train = pd.read_csv("/data1/minh/multimodal/x_train.txt", sep=" ", header=None)
     y_train = pd.read_csv("/data1/minh/multimodal/y_train.txt", sep=" ", header=None)
-    #x_train = pd.read_csv("../data/x_train.txt", sep=" ", header=None)
+    x_train = pd.read_csv("../data/x_train.txt", sep=" ", header=None)
     #y_train = pd.read_csv("/data1/minh/multimodal/y_train.txt", sep=" ", header=None)
     print("Done loading x_train and y_train")
     model = MultimodalEmbedding(x_train, y_train, args)
