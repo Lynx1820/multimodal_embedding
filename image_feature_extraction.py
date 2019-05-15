@@ -58,24 +58,21 @@ for dict_fn in tqdm(dictionaries):
               continue
             # for every translation, we ge the image path_id - which will then extract features for 
             for translation in english_translations:
-                #check whether directory is empty: 
-                path = str(i) + "/01.jpg"
-                exists = os.path.isfile(str(img_path) + "/" + dictionaries[dict_fn] + "/" + path)
-                if not exist: 
-                    break
-                for img_num in range(2 ,11):
-                    path = str(i) + "/" + str(img_num) + ".jpg"
-                    exists = os.path.isfile(str(img_path) + "/" + dictionaries[dict_fn] + "/" + path)
-                    # check to see whether the path exist. If not, then add to omit 
+                ends = ["01","02","03","04","05","06","07","08","09","10"]
+                for img_num in ends:
+                    path = str(img_path) + "/" + dictionaries[dict_fn] + "/" + str(i) + "/" + img_num + ".jpg"
+                    exists = os.path.isfile(path)
+                    # check to see whether the path exist
                     if not exists: 
-                        print("Could not find file: " + str(img_path) + "/" + dictionaries[dict_fn] + "/" + path)
-                        break
+                        print("Could not find file: " +  path)
+                        continue
                     paths.append(path) 
                     trans.append(translation)
 
 #dataframe to pass in X and y to cnn learner
 df = pd.DataFrame({'paths': paths, 'trans' : trans})
-
+print("finished")
+df.to_csv("dataframe", sep='\t')
 exit(0)
 data = ImageDataBunch.from_df(img_path, df, ds_tfms=get_transforms(), size=224, bs=bs).normalize(imagenet_stats)
 
