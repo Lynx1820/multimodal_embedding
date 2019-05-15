@@ -129,6 +129,9 @@ def extract_features(train_data):
 #load dataframe or create dataframe
 df = pd.read_csv('/home1/d/dkeren/599/multimodal_embedding/train_df.csv', sep='\t', index_col=[0])
 df = df.dropna()
-fea = extract_features(df)
-
-np.savez("img_embeddings_resnet34.npz", df['trans'], fea)
+#rows = df.shape[0]
+process_id = sys.argv[1]
+df_split = np.array_split(df,100)[process_id]
+fea = extract_features(df_split)
+filename = "img_embeddings_resnet34.npz" + str(process_id)
+np.savez(filename, df_split['trans'], fea)
