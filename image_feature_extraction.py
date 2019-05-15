@@ -81,7 +81,7 @@ def build_dataframe():
 
 def extract_features(train_data): 
     bs = 64
-    data = ImageDataBunch.from_df(img_path, train_df, ds_tfms=get_transforms(), size=224, bs=bs).normalize(imagenet_stats)
+    data = ImageDataBunch.from_df("/", train_data, ds_tfms=get_transforms(), size=224, bs=bs).normalize(imagenet_stats)
 
     learn = cnn_learner(data, models.resnet34, metrics=error_rate)
 
@@ -127,7 +127,8 @@ def extract_features(train_data):
 
 
 #load dataframe or create dataframe
-df = pd.read_csv('/home1/d/dkeren/599/multimodal_embedding/train_df.csv', sep='\t')
+df = pd.read_csv('/home1/d/dkeren/599/multimodal_embedding/train_df.csv', sep='\t', index_col=[0])
+df = df.dropna()
 fea = extract_features(df)
 
 np.savez("img_embeddings_resnet34.npz", df['trans'], fea)
