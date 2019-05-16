@@ -14,7 +14,7 @@
 # working directory (check for specific requirements for your research group)
 # man 1 qsub
 #$ -wd /nlp/users/dkeren
-#$ -pe parallel-onenode 1
+#$ -pe parallel-onenode 10
 # interpret using BASH shell
 #$ -S /bin/bash
 
@@ -36,7 +36,7 @@ cd /nlp/users/dkeren/multimodal_embedding
 # what environment variables are available to this job script, e.g. $JOB_ID
 /usr/bin/env
 
-for i in {0..99}
+for i in {2..11}
 do
-   ./qrun.sh i
+   ./qrun.sh $i -t 1 & 
 done

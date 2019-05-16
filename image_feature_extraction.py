@@ -33,7 +33,7 @@ class my_dataset(data.Dataset):
     def __getitem__(self, index):
         """ Get a sample from the dataset
         """
-        #print(self.img_path + self.filenames[index])
+        #print(self.img_path + "/" +self.filenames[index])
         img = Image.open(self.img_path + "/" + self.filenames[index]).convert('RGB') 
         return Variable(normalize(to_tensor(scaler(img))))
 
@@ -82,7 +82,6 @@ def build_dataframe():
 def extract_features(train_data): 
     bs = 64
     my_data = ImageDataBunch.from_df("/nlp/users/dkeren", train_data, ds_tfms=get_transforms(), size=224, bs=bs, folder="/nlp").normalize(imagenet_stats)
-    print(my_data.classes)
     len(my_data.classes)
     learn = cnn_learner(my_data, models.resnet34, metrics=error_rate)
 
@@ -131,9 +130,11 @@ full_df = pd.read_csv('train_df.csv', sep='\t', index_col=[0])
 full_df = full_df.dropna()
 #rows = df.shape[0]
 process_id = int(sys.argv[1])
-df_split = np.array_split(full_df,100)[process_id]
-print( df_split.shape[0]) 
+df_split = np.array_split(full_df,200)[process_id]
+#print( df_split.shape[0]) 
 #print("done splitting data")
+df_split = df_split.reset_index()
+df_split = df_split.drop(columns=['index'])
 fea = extract_features(df_split)
 filename = "img_embeddings_resnet34-" + str(process_id) + ".npz"
 print("done")
