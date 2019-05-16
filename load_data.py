@@ -43,6 +43,45 @@ def create_image_embedding(folder_name):
                 break
     print("Done average pooling")
 
+def create_image_embedding_resnet(folder_name):
+    """
+    create one image embedding for each word by average pooling all image feature vectors
+    @save img_embedding: a numpy array of image embeddings 
+    """
+    # read the files that contain dfs with words and image embeddings - all distributed in chunchs
+    # TODO: handle duplicates or not (maybe Magnitude will eventually handle this? 
+    folders = os.listdir(folder_name)
+    all_words = {}
+    
+    for f in folders:
+        print("Folder name: {}".format(f))
+        df_split = pd.load('/nlp/users/dkeren/multimodal_embedding/data_chunks/'+f, allow_pickle = True)
+        words = df_split['arr_0']
+        features = df_split['arr_1']
+        print("Done loading from pandas")
+        averaged = np.array([])
+        averaged_index = 0
+        word_to_index = {}
+        start = 0
+        for i in range(words.shape[0]-1):
+            # only process English words, which start with 'row'
+            if words[i] in word_to_index: 
+                print("found repeated word" + word[i])
+            if words[i] != words[i+1]:
+                end = i+1
+                data_path = '/nlp/users/dkeren/multimodal_embedding/img_embedding.txt'
+                img_embedding = features[start:end]
+                # average pooling to create one single image embedding
+                average_embedding = img_embedding.sum(axis=0) / img_embedding.shape[0]
+                #average_embedding = np.insert(average_embedding, 0, words[i][0])
+                word_to_index[word[i]] = averaged_index
+                averaged = np.concatenate(averaged,average_embedding)
+                # save all embeddings to txt, convert txt to magnitude in cmd line 
+                with open(data_path, 'a') as f:
+                    f.write(word[i] + " ")
+                    np.savetxt(f, average_embedding.reshape(1, word[i], average_embedding.shape[0]), fmt="%s")
+                start = i+1
+    print("Done average pooling")
 # 
 def create_train_set(word_magnitude_file,image_magnitude_file):
     """
@@ -98,6 +137,9 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
 #folder with image vectors: '/data1/minh/data'
 #current folder with sample fasttext: '~/data/fasttext_sample.magnitude'
 #folder with image magnitude: '/data1/mihn/magnitude/image.magnitude'
-word_magnitude_file = '../data/fasttext_sample.magnitude'
-image_magnitude_file = '/data1/minh/magnitude/image.magnitude'
-create_train_set(word_magnitude_file,image_magnitude_file)
+folder_path = "data_chunks"
+create_image_embedding_resnet(folder_path)
+# TODO: for later
+#word_magnitude_file = '../data/fasttext_sample.magnitude'
+#image_magnitude_file = '/data1/minh/magnitude/image.magnitude'
+#create_train_set(word_magnitude_file,image_magnitude_file)
