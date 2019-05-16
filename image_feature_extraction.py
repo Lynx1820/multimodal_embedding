@@ -46,7 +46,7 @@ class my_dataset(data.Dataset):
 
 
 #base path to images
-img_path = '/nlp/data/MMID/raw'
+img_path = '/nlp'
 dict_path = '/nlp/data/MMID/dictionaries' 
 
 
@@ -81,12 +81,13 @@ def build_dataframe():
 
 def extract_features(train_data): 
     bs = 64
-    data = ImageDataBunch.from_df("/", train_data, ds_tfms=get_transforms(), size=224, bs=bs).normalize(imagenet_stats)
-
-    learn = cnn_learner(data, models.resnet34, metrics=error_rate)
+    my_data = ImageDataBunch.from_df("/nlp/users/dkeren", train_data, ds_tfms=get_transforms(), size=224, bs=bs, folder="/nlp").normalize(imagenet_stats)
+    print(my_data.classes)
+    len(my_data.classes)
+    learn = cnn_learner(my_data, models.resnet34, metrics=error_rate)
 
     #This changes the forwards layers of the model 
-    learn.fit_one_cycle(1)
+    learn.fit_one_cycle(2)
 
     # Get the mapping of parameter names to values from the trained Learner and a new ResNet.
     learner_state_dict = learn.model.state_dict()
@@ -108,8 +109,8 @@ def extract_features(train_data):
     model = torch.nn.Sequential(*removed)
 
     # Get convolutional features from model with the fully connected layer removed.
-    dataset = my_dataset(str(img_path), df['paths'],df['trans'])
-    dataloader = data.DataLoader(dataset, batch_size = bs, num_workers = 1)
+    dataset = my_dataset(str(img_path), train_data['paths'],train_data['trans'])
+    dataloader = data.DataLoader(dataset, batch_size = bs, num_workers = 4)
 
     features = []
     init = 1
@@ -125,13 +126,15 @@ def extract_features(train_data):
             features = np.append(features, numpy_features,axis = 0)
     return features
 
-
 #load dataframe or create dataframe
-df = pd.read_csv('/home1/d/dkeren/599/multimodal_embedding/train_df.csv', sep='\t', index_col=[0])
-df = df.dropna()
+full_df = pd.read_csv('train_df.csv', sep='\t', index_col=[0])
+full_df = full_df.dropna()
 #rows = df.shape[0]
-process_id = sys.argv[1]
-df_split = np.array_split(df,100)[process_id]
+process_id = int(sys.argv[1])
+df_split = np.array_split(full_df,100)[process_id]
+print( df_split.shape[0]) 
+#print("done splitting data")
 fea = extract_features(df_split)
-filename = "img_embeddings_resnet34.npz" + str(process_id)
+filename = "img_embeddings_resnet34-" + str(process_id) + ".npz"
+print("done")
 np.savez(filename, df_split['trans'], fea)
