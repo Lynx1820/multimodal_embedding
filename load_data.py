@@ -3,7 +3,7 @@ Purpose:
  - Collect image embeddings in one txt file, convert to Magnitude in command line 
  - Create the training set (x_train, y_train)
 """
-
+import sys
 import numpy as np
 import pickle
 import pandas as pd 
@@ -43,7 +43,7 @@ def create_image_embedding(folder_name):
                 break
     print("Done average pooling")
 
-def create_image_embedding_resnet(folder_name):
+def create_image_embedding_resnet(data_path, folder_name):
     """
     create one image embedding for each word by average pooling all image feature vectors
     @save img_embedding: a numpy array of image embeddings 
@@ -52,36 +52,45 @@ def create_image_embedding_resnet(folder_name):
     # TODO: handle duplicates or not (maybe Magnitude will eventually handle this? 
     folders = os.listdir(folder_name)
     all_words = {}
-    
+    word_to_index = {}
+    init = 1
+    av_index = 0
     for f in folders:
         print("Folder name: {}".format(f))
-        df_split = pd.load('/nlp/users/dkeren/multimodal_embedding/data_chunks/'+f, allow_pickle = True)
+        df_split = np.load(folder_name + "/" + f, allow_pickle = True)
         words = df_split['arr_0']
         features = df_split['arr_1']
         print("Done loading from pandas")
-        averaged = np.array([])
-        averaged_index = 0
-        word_to_index = {}
+        #averaged = np.array([])
         start = 0
         for i in range(words.shape[0]-1):
             # only process English words, which start with 'row'
-            if words[i] in word_to_index: 
-                print("found repeated word" + word[i])
             if words[i] != words[i+1]:
                 end = i+1
-                data_path = '/nlp/users/dkeren/multimodal_embedding/img_embedding.txt'
                 img_embedding = features[start:end]
                 # average pooling to create one single image embedding
                 average_embedding = img_embedding.sum(axis=0) / img_embedding.shape[0]
+                if words[i] in word_to_index: 
+                    #print("found repeated word" + words[i])
+                    averaged[word_to_index[words[i]],:] = (averaged[word_to_index[words[i]],:] + average_embedding) / 2
+                    continue
                 #average_embedding = np.insert(average_embedding, 0, words[i][0])
-                word_to_index[word[i]] = averaged_index
-                averaged = np.concatenate(averaged,average_embedding)
-                # save all embeddings to txt, convert txt to magnitude in cmd line 
-                with open(data_path, 'a') as f:
-                    f.write(word[i] + " ")
-                    np.savetxt(f, average_embedding.reshape(1, word[i], average_embedding.shape[0]), fmt="%s")
+                word_to_index[words[i]] = av_index
+                av_index += 1
+                if init == 1:
+                    averaged = average_embedding
+                    init = 0 
+                averaged = np.vstack((averaged,average_embedding))
                 start = i+1
-    print("Done average pooling")
+                # save all embeddings to txt, convert txt to magnitude in cmd line 
+    with open(data_path, 'a') as dfile:
+        for word in word_to_index: 
+            dfile.write(word + " ")
+            np.savetxt(dfile, averaged[word_to_index[word],:].reshape(1,averaged[word_to_index[word],:].shape[0]), fmt="%s")
+    #print(word_to_index.keys())
+                
+    print("Done average pooling, words" )
+    print(len(word_to_index.keys())) 
 # 
 def create_train_set(word_magnitude_file,image_magnitude_file):
     """
@@ -137,8 +146,11 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
 #folder with image vectors: '/data1/minh/data'
 #current folder with sample fasttext: '~/data/fasttext_sample.magnitude'
 #folder with image magnitude: '/data1/mihn/magnitude/image.magnitude'
-folder_path = "data_chunks"
-create_image_embedding_resnet(folder_path)
+#folder_path = "/nlp/data/dkeren/data_chunks"
+
+folder_path = "/nlp/data/dkeren/" + sys.argv[1]
+data_path = '/nlp/data/dkeren/img_embedding_' + sys.argv[1] + ".txt"
+create_image_embedding_resnet(data_path, folder_path)
 # TODO: for later
 #word_magnitude_file = '../data/fasttext_sample.magnitude'
 #image_magnitude_file = '/data1/minh/magnitude/image.magnitude'

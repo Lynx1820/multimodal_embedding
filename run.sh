@@ -36,7 +36,7 @@ cd /nlp/users/dkeren/multimodal_embedding
 # what environment variables are available to this job script, e.g. $JOB_ID
 /usr/bin/env
 
-for i in {2..11}
+for i in {61..70}
 do
-   ./qrun.sh $i -t 1 & 
+   qsub qrun.sh $i
 done

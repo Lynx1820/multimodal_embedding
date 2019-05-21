@@ -126,7 +126,7 @@ def extract_features(train_data):
     return features
 
 #load dataframe or create dataframe
-full_df = pd.read_csv('train_df.csv', sep='\t', index_col=[0])
+full_df = pd.read_csv('/nlp/data/dkeren/train_df.csv', sep='\t', index_col=[0])
 full_df = full_df.dropna()
 #rows = df.shape[0]
 process_id = int(sys.argv[1])
@@ -136,6 +136,6 @@ df_split = np.array_split(full_df,200)[process_id]
 df_split = df_split.reset_index()
 df_split = df_split.drop(columns=['index'])
 fea = extract_features(df_split)
-filename = "img_embeddings_resnet34-" + str(process_id) + ".npz"
+filename = "/nlp/data/dkeren/img_embeddings_resnet34-" + str(process_id) + ".npz"
 print("done")
 np.savez(filename, df_split['trans'], fea)
