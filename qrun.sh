@@ -2,7 +2,7 @@
 
 # wallclock time reservation (format is hours:minutes:seconds).
 # man 5 complex
-#$ -l h_rt=01:00:00
+#$ -l h_rt=02:00:00
 
 # 8GB of memory reservation 8x1 = 8GB
 #$ -l mem=8G

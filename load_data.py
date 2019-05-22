@@ -97,9 +97,9 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
     create the train set (x_train, y_train)
     @return x_train, y_train
     """
-    words = pd.read_csv('/data1/minh/multimodal/img_embedding.txt', sep=' ', header=None).values
+    words = pd.read_csv('/nlp/data/dkeren/resnet34_img_embedding.txt', sep=' ', header=None).values
     # save all words in a txt file k
-    np.savetxt('../data/words.txt', words[:,0], fmt="%s")
+    np.savetxt('/nlp/data/dkeren/words.txt', words[:,0], fmt="%s")
     word_dict = Magnitude(word_magnitude_file)
     #img_dict = Magnitude('/data1/embeddings/pymagnitude/image.magnitude')
     img_dict = Magnitude(image_magnitude_file)
@@ -121,7 +121,7 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
                     word += " "
             phrase = word 
         
-        with open('../data/words_processed.txt', 'a') as f:
+        with open('words_processed.txt', 'a') as f:
             f.write("{}\n".format(phrase))
         word_embedding = word_dict.query(phrase) #query word embedding for image word
         check_nan = np.isnan(word_embedding)
@@ -137,9 +137,9 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
         # if all_nan == img_embedding.shape[0]:
             
         # add to x_train and y_train
-        with open('../data/x_train1.txt', 'a') as f:
+        with open('/nlp/data/dkeren/x_train1.txt', 'a') as f:
             np.savetxt(f, word_embedding.reshape(1, word_embedding.shape[0]))
-        with open('../data/y_train1.txt', 'a') as f:
+        with open('/nlp/data/dkeren/y_train1.txt', 'a') as f:
             np.savetxt(f, img_embedding.reshape(1, img_embedding.shape[0]))
 
 #create_image_embedding(folder_name)
@@ -150,8 +150,10 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
 
 folder_path = "/nlp/data/dkeren/" + sys.argv[1]
 data_path = '/nlp/data/dkeren/img_embedding_' + sys.argv[1] + ".txt"
-create_image_embedding_resnet(data_path, folder_path)
+if sys.argv[1] == 'img': 
+    create_image_embedding_resnet(data_path, folder_path)
 # TODO: for later
-#word_magnitude_file = '../data/fasttext_sample.magnitude'
-#image_magnitude_file = '/data1/minh/magnitude/image.magnitude'
-#create_train_set(word_magnitude_file,image_magnitude_file)
+word_magnitude_file = '/nlp/data/dkeren/crawl-300d-2M.magnitude'
+image_magnitude_file = '/nlp/data/dkeren/img.magnitude'
+if sys.argv[1] == 'train': 
+    create_train_set(word_magnitude_file,image_magnitude_file)

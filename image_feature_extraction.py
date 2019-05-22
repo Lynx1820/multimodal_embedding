@@ -13,7 +13,7 @@ from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 
 #base path to images
-img_path = '/nlp'
+img_path = 'data/MMID/raw'
 dict_path = '/nlp/data/MMID/dictionaries' 
 
 
@@ -34,11 +34,11 @@ def build_dataframe():
                 translation = english_translations[0] #since the image is the same, we just train on the first word
                 ends = ["01","02","03","04","05","06","07","08","09","10"]
                 for img_num in ends:
-                    path = str(img_path) + "/" + dictionaries[dict_fn] + "/" + str(i) + "/" + img_num + ".jpg"
+                    path =  + "/" + dictionaries[dict_fn] + "/" + str(i) + "/" + img_num + ".jpg"
                     exists = os.path.isfile(path)
                     # check to see whether the path exist
                     if not exists: 
-                        print("Could not find file: " +  path)
+                        #print("Could not find file: " +  path)
                         continue
                     paths.append(path) 
                     trans.append(translation)
@@ -69,19 +69,20 @@ def extract_features(train_data):
     learn = cnn_learner(my_data, models.resnet34, metrics=error_rate)
 
     #This changes the forwards layers of the model 
-    learn.fit_one_cycle(4)
+    #learn.fit_one_cycle(3)
 
     sf = SaveFeatures(learn.model[1][5]) ## Output before the last FC layer
     ## By running this feature vectors would be saved in sf variable initated above
     _= learn.get_preds(my_data.train_ds)
-    _= learn.get_preds(DatasetType.Valid)
+    #_= learn.get_preds(DatasetType.Valid)
 
     #img_paths = [str(x) for x in (list(my_data.train_ds.items))]
     #feature_dict = dict(zip(trans,sf.features))
     #img_dict = dict(zip(trans,img_path))
     return sf.features
 
-
+#build_dataframe()
+#exit(0)
 #load dataframe or create dataframe
 full_df = pd.read_csv('/nlp/data/dkeren/train_df.csv', sep='\t', index_col=[0])
 #rows = df.shape[0]
@@ -94,5 +95,5 @@ df_split = df_split.drop(columns=['index'])
 fea = extract_features(df_split)
 
 filename = "/nlp/data/dkeren/img_embeddings_resnet34-" + str(process_id) + ".npz"
-# print("done")
-# np.savez(filename, df_split['trans'], fea)
+print("done")
+np.savez(filename, df_split['trans'], fea)
