@@ -58,11 +58,14 @@ def create_image_embedding_resnet(data_path, folder_name):
     for f in folders:
         print("Folder name: {}".format(f))
         split = pd.read_csv(folder_name + "/" + f, sep='\t', header=None).values
+        
         #df_split = np.load(folder_name + "/" + f, allow_pickle = True)
         #words = df_split['arr_0']
         #features = df_split['arr_1']
         words = split[:, 0]
-        embeddings = split[:, 1]
+        temp = split[:, 1]
+        embeddings = np.asarray([np.asarray(x.split(' ')) for x in temp]).astype(float)
+        for 
         print("Done loading from pandas")
         #averaged = np.array([])
         start = 0
