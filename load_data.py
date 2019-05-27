@@ -76,23 +76,13 @@ def create_image_embedding_resnet(data_path, folder_name):
                 img_embedding = embeddings[start:end]
                 # average pooling to create one single image embedding
                 average_embedding = img_embedding.sum(axis=0) / img_embedding.shape[0]
-                if words[i] in word_to_index: 
-                    #print("found repeated word" + words[i])
-                    averaged[word_to_index[words[i]],:] = (averaged[word_to_index[words[i]],:] + average_embedding) / 2
-                    continue
-                #average_embedding = np.insert(average_embedding, 0, words[i][0])
-                word_to_index[words[i]] = av_index
-                av_index += 1
-                if init == 1:
-                    averaged = average_embedding
-                    init = 0 
-                averaged = np.vstack((averaged,average_embedding))
+
                 start = i+1
+                with open(data_path, 'a') as dfile:
+                    dfile.write(words[i] + "\t")
+                    np.savetxt(dfile, average_embedding.reshape(1,average_embedding.shape[0]), fmt="%s")
                 # save all embeddings to txt, convert txt to magnitude in cmd line 
-    with open(data_path, 'a') as dfile:
-        for word in word_to_index: 
-            dfile.write(word + "\t")
-            np.savetxt(dfile, averaged[word_to_index[word],:].reshape(1,averaged[word_to_index[word],:].shape[0]), fmt="%s")
+    
     #print(word_to_index.keys())
                 
     print("Done average pooling, words" )
