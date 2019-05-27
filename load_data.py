@@ -57,9 +57,12 @@ def create_image_embedding_resnet(data_path, folder_name):
     av_index = 0
     for f in folders:
         print("Folder name: {}".format(f))
-        df_split = np.load(folder_name + "/" + f, allow_pickle = True)
-        words = df_split['arr_0']
-        features = df_split['arr_1']
+        split = pd.read_csv(folder_name + "/" + f, sep='\t', header=None).values
+        #df_split = np.load(folder_name + "/" + f, allow_pickle = True)
+        #words = df_split['arr_0']
+        #features = df_split['arr_1']
+        words = split[:, 0]
+        embeddings = split[:, 1]
         print("Done loading from pandas")
         #averaged = np.array([])
         start = 0
@@ -67,7 +70,7 @@ def create_image_embedding_resnet(data_path, folder_name):
             # only process English words, which start with 'row'
             if words[i] != words[i+1]:
                 end = i+1
-                img_embedding = features[start:end]
+                img_embedding = embeddings[start:end]
                 # average pooling to create one single image embedding
                 average_embedding = img_embedding.sum(axis=0) / img_embedding.shape[0]
                 if words[i] in word_to_index: 
@@ -85,7 +88,7 @@ def create_image_embedding_resnet(data_path, folder_name):
                 # save all embeddings to txt, convert txt to magnitude in cmd line 
     with open(data_path, 'a') as dfile:
         for word in word_to_index: 
-            dfile.write(word + " ")
+            dfile.write(word + "\t")
             np.savetxt(dfile, averaged[word_to_index[word],:].reshape(1,averaged[word_to_index[word],:].shape[0]), fmt="%s")
     #print(word_to_index.keys())
                 
