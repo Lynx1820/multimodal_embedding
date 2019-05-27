@@ -69,7 +69,7 @@ def extract_features(train_data):
     learn = cnn_learner(my_data, models.resnet50, metrics=error_rate)
 
     #This changes the forwards layers of the model 
-    #learn.fit_one_cycle(3)
+    learn.fit_one_cycle(2)
 
     sf = SaveFeatures(learn.model[1][5]) ## Output before the last FC layer
     ## By running this feature vectors would be saved in sf variable initated above
@@ -91,7 +91,7 @@ df_split = df_split.reset_index()
 df_split = df_split.drop(columns=['index'])
 features = extract_features(df_split)
 translations = df_split['trans']
-filename = "/nlp/data/dkeren/img_embeddings_resnet34-" + str(process_id) + ".txt"
+filename = "/nlp/data/dkeren/img_embeddings_resnet50-" + str(process_id) + ".txt"
 print("done")
 #np.savez(filename, df_split['trans'], fea)
 for word, arr in zip(translations,features):

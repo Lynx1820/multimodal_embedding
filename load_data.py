@@ -153,10 +153,10 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
 
 folder_path = "/nlp/data/dkeren/" + sys.argv[1]
 data_path = '/nlp/data/dkeren/img_embedding_' + sys.argv[1] + ".txt"
-if sys.argv[1] == 'img': 
-    create_image_embedding_resnet(data_path, folder_path)
 # TODO: for later
 word_magnitude_file = '/nlp/data/dkeren/crawl-300d-2M.magnitude'
 image_magnitude_file = '/nlp/data/dkeren/img.magnitude'
 if sys.argv[1] == 'train': 
     create_train_set(word_magnitude_file,image_magnitude_file)
+else: 
+    create_image_embedding_resnet(data_path, folder_path)
