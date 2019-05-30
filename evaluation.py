@@ -147,7 +147,7 @@ def main():
 if __name__ == '__main__':
     # convert dictionary to txt file, then convert to Magnitude format in command line 
     # comment out main() if this function is called()
-    # args = parse_args()
-    # convert_dict_to_txt()
+    args = parse_args()
+    #convert_dict_to_txt('model/fasttext')
     main()
 

@@ -21,14 +21,14 @@ def get_eval_set_list():
     
     wordsim_rel = pd.read_csv('../evaluation_metrics/wordsim353_sim_rel/wordsim_relatedness_goldstandard.txt', sep='\t', header=None).values
     
-    #semsim = pd.read_csv('/data1/minh/evaluation/SemSim/SemSim.txt', sep='\t', header=0)
-    #semsim['WORD1'], semsim['WORD2'] = semsim['WORDPAIR'].str.split('#', 1).str
-    #sem = semsim[['WORD1', 'WORD2', 'SEMANTIC']].values
-    #sim = semsim[['WORD1', 'WORD2', 'VISUAL']].values
+    semsim = pd.read_csv('/data1/dkeren/SemSim/SemSim.txt', sep='\t', header=0)
+    semsim['WORD1'], semsim['WORD2'] = semsim['WORDPAIR'].str.split('#', 1).str
+    sem = semsim[['WORD1', 'WORD2', 'SEMANTIC']].values
+    sim = semsim[['WORD1', 'WORD2', 'VISUAL']].values
     
     men = pd.read_csv('/data1/minh/evaluation/MEN/MEN_dataset_natural_form_full', sep= " ", header=None).values
     
-    eval_set_list = [wordsim_sim, wordsim_rel, simlex, men]
+    eval_set_list = [wordsim_sim, wordsim_rel, simlex, men, sem, sim]
     return eval_set_list
 
 def split_eval(eval_set_list):

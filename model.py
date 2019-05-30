@@ -27,7 +27,7 @@ class MultimodalEmbedding:
 
     def build_linear_model(self):
         self.model = Sequential()
-        self.model.add(Dense(4096, input_shape=(300,)))
+        self.model.add(Dense(512, input_shape=(300,)))
         self.model.add(Dropout(0.1)) 
         self.model.summary()
         sgd = SGD(lr=self.args.lr)
@@ -37,7 +37,7 @@ class MultimodalEmbedding:
         self.model = Sequential()
         self.model.add(Dense(self.args.u, activation="tanh", input_shape=(300,)))
         self.model.add(Dropout(0.25))
-        self.model.add(Dense(4096))
+        self.model.add(Dense(512))
         self.model.summary()
 
         sgd = SGD(lr=self.args.lr)
@@ -119,8 +119,8 @@ def main():
         raise Exception("Either save or load a model")
     
     #x_train = pd.read_csv("/data1/minh/multimodal/x_train.txt", sep=" ", header=None)
-    y_train = pd.read_csv("/data1/minh/multimodal/y_train.txt", sep=" ", header=None)
-    x_train = pd.read_csv("../data/x_train.txt", sep=" ", header=None)
+    y_train = pd.read_csv("/data1/dkeren/y_train3.txt", sep=" ", header=None)
+    x_train = pd.read_csv("/data1/dkeren/x_train3.txt", sep=" ", header=None)
     #y_train = pd.read_csv("/data1/minh/multimodal/y_train.txt", sep=" ", header=None)
     print("Done loading x_train and y_train")
     model = MultimodalEmbedding(x_train, y_train, args)
