@@ -57,9 +57,15 @@ def create_image_embedding_resnet(data_path, folder_name):
     av_index = 0
     for f in folders:
         print("Folder name: {}".format(f))
-        df_split = np.load(folder_name + "/" + f, allow_pickle = True)
-        words = df_split['arr_0']
-        features = df_split['arr_1']
+        split = pd.read_csv(folder_name + "/" + f, sep='\t', header=None).values
+        
+        #df_split = np.load(folder_name + "/" + f, allow_pickle = True)
+        #words = df_split['arr_0']
+        #features = df_split['arr_1']
+        words = split[:, 0]
+        temp = split[:, 1]
+        embeddings = np.asarray([np.asarray(x.split(' ')) for x in temp]).astype(float)
+        for 
         print("Done loading from pandas")
         #averaged = np.array([])
         start = 0
@@ -67,26 +73,16 @@ def create_image_embedding_resnet(data_path, folder_name):
             # only process English words, which start with 'row'
             if words[i] != words[i+1]:
                 end = i+1
-                img_embedding = features[start:end]
+                img_embedding = embeddings[start:end]
                 # average pooling to create one single image embedding
                 average_embedding = img_embedding.sum(axis=0) / img_embedding.shape[0]
-                if words[i] in word_to_index: 
-                    #print("found repeated word" + words[i])
-                    averaged[word_to_index[words[i]],:] = (averaged[word_to_index[words[i]],:] + average_embedding) / 2
-                    continue
-                #average_embedding = np.insert(average_embedding, 0, words[i][0])
-                word_to_index[words[i]] = av_index
-                av_index += 1
-                if init == 1:
-                    averaged = average_embedding
-                    init = 0 
-                averaged = np.vstack((averaged,average_embedding))
+
                 start = i+1
+                with open(data_path, 'a') as dfile:
+                    dfile.write(words[i] + "\t")
+                    np.savetxt(dfile, average_embedding.reshape(1,average_embedding.shape[0]), fmt="%s")
                 # save all embeddings to txt, convert txt to magnitude in cmd line 
-    with open(data_path, 'a') as dfile:
-        for word in word_to_index: 
-            dfile.write(word + " ")
-            np.savetxt(dfile, averaged[word_to_index[word],:].reshape(1,averaged[word_to_index[word],:].shape[0]), fmt="%s")
+    
     #print(word_to_index.keys())
                 
     print("Done average pooling, words" )
@@ -150,10 +146,10 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
 
 folder_path = "/nlp/data/dkeren/" + sys.argv[1]
 data_path = '/nlp/data/dkeren/img_embedding_' + sys.argv[1] + ".txt"
-if sys.argv[1] == 'img': 
-    create_image_embedding_resnet(data_path, folder_path)
 # TODO: for later
 word_magnitude_file = '/nlp/data/dkeren/crawl-300d-2M.magnitude'
 image_magnitude_file = '/nlp/data/dkeren/img.magnitude'
 if sys.argv[1] == 'train': 
     create_train_set(word_magnitude_file,image_magnitude_file)
+else: 
+    create_image_embedding_resnet(data_path, folder_path)
