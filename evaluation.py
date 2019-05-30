@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 import os
+import config
 from pymagnitude import *
 import pickle 
 
@@ -74,7 +75,7 @@ def evaluate(eval_set_type, word_dict, dict_format):
     @param eval_set_type: Type of eval set (ZS/VIS)
     @param word_dict: corresponding dictionary: keys: zs/vis words, values: predicted embeddings 
     """ 
-    path = '/data1/minh/evaluation/'
+    path = paths['eval_dir']
     for i in range(6):
         eval_set = pd.read_csv(path+str(i)+'_'+eval_set_type+'.txt', sep=' ', header=None).as_matrix()
         if dict_format == 'dict':
@@ -111,8 +112,11 @@ def parse_args():
 
 def main():
     args = parse_args()
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    paths = config['PATHS']
     # load evaluation sets
-    eval_set_list = get_eval_set_list()
+    eval_set_list = get_eval_set_list(paths)
 
     # open dictionaries that contains predicted embeddings
     with open(args.path+"_vis.p", 'rb') as fp:
@@ -149,5 +153,6 @@ if __name__ == '__main__':
     # comment out main() if this function is called()
     args = parse_args()
     #convert_dict_to_txt('model/fasttext')
+    
     main()
 
