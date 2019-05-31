@@ -16,7 +16,7 @@ def get_eval_set_list(paths):
     """
     Wordsim-sim, wordsim-rel, simlex, MEN, SemSim, VisSim
     """
-    simlex = pd.read_csv(paths['eval_dir']+ '/SimLex-999/SimLex-999.txt', sep="\t", header=0)
+    simlex = pd.read_csv(paths['eval_dir'] + "/SimLex-999/SimLex-999.txt", sep="\t", header=0)
     simlex = simlex[['word1', 'word2', 'SimLex999']].values
 
     wordsim_sim = pd.read_csv(paths['eval_dir'] + '/wordsim353_sim_rel/wordsim_similarity_goldstandard.txt', sep='\t', header=None).values
@@ -38,7 +38,7 @@ def split_eval(eval_set_list):
     Split each eval set into a VIS set and a ZS set based on the words processed 
     """
     
-    vis_words = pd.read_csv(paths['code_dir'] + "words_processed.txt", header=None).values
+    vis_words = pd.read_csv(paths['code_dir'] + "/words_processed.txt", header=None).values
     counter = 0 # to mark eval set 
 
     for eval_set in eval_set_list:
@@ -128,7 +128,7 @@ def get_eval_set_missing(eval_set_list):
 
 def main():
     # load evaluation sets
-    eval_set_list = get_eval_set_list()
+    eval_set_list = get_eval_set_list(paths)
     split_eval(eval_set_list)
     print("Done splitting eval sets into zs and vis.")
     print("Each eval set should have a separate zs and vis in evaluation folder.")
