@@ -14,6 +14,7 @@ from argparse import ArgumentParser
 import pandas as pd
 import pickle
 import timeit
+import configparser
 
 class MultimodalEmbedding:
     """
@@ -115,12 +116,15 @@ def parse_args():
 
 def main():
     args = parse_args()
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    paths = config['PATHS']
     if args.s == None and args.l == None:
         raise Exception("Either save or load a model")
     
     #x_train = pd.read_csv("/data1/minh/multimodal/x_train.txt", sep=" ", header=None)
-    y_train = pd.read_csv("/data1/dkeren/y_train3.txt", sep=" ", header=None)
-    x_train = pd.read_csv("/data1/dkeren/x_train3.txt", sep=" ", header=None)
+    y_train = pd.read_csv(paths['y_train'], sep=" ", header=None)
+    x_train = pd.read_csv(paths['x_train'], sep=" ", header=None)
     #y_train = pd.read_csv("/data1/minh/multimodal/y_train.txt", sep=" ", header=None)
     print("Done loading x_train and y_train")
     model = MultimodalEmbedding(x_train, y_train, args)
@@ -134,9 +138,8 @@ def main():
         model_path = args.l
         model.load_model() 
     
-    path = '/data1/minh/multimodal/' 
-    vis_pred_set = pd.read_csv(path+'pred_set_vis.txt', sep=' ', header=None).values
-    zs_pred_set = pd.read_csv(path+'pred_set_zs.txt', sep=' ', header=None).values
+    vis_pred_set = pd.read_csv(paths['eval'] +'pred_set_vis.txt', sep=' ', header=None).values
+    zs_pred_set = pd.read_csv(paths['eval'] +'pred_set_zs.txt', sep=' ', header=None).values
     vis_embedding = model.predict(vis_pred_set[:, 1:])
     zs_embedding = model.predict(zs_pred_set[:, 1:])
      
