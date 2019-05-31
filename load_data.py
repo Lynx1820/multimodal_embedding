@@ -65,7 +65,7 @@ def create_image_embedding_resnet(data_path, folder_name):
         words = split[:, 0]
         temp = split[:, 1]
         embeddings = np.asarray([np.asarray(x.split(' ')) for x in temp]).astype(float)
-        for 
+        
         print("Done loading from pandas")
         #averaged = np.array([])
         start = 0
@@ -95,7 +95,7 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
     """
     words = pd.read_csv(paths['image_embedding'], sep=' ', header=None).values
     # save all words in a txt file k
-    np.savetxt('/nlp/data/dkeren/words.txt', words[:,0], fmt="%s")
+    np.savetxt('/nlp/data/dkeren/words_uc.txt', words[:,0], fmt="%s")
     word_dict = Magnitude(paths['word_magnitude'])
     #img_dict = Magnitude('/data1/embeddings/pymagnitude/image.magnitude')
     img_dict = Magnitude(paths['image_magnitude'])
@@ -104,18 +104,18 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
     # create a file of processed words (no annotations of translation)
     # query for processed words' embeddings
     for i in range(words.shape[0]):
-        unprocessed_word = words[i][0]
+        phrase = words[i][0].replace('_', ' ')
         # convert word, e.g row-writings to writings 
-        if "row" in words[i][0]:
-            phrase = words[i][0].split('-')[1]
-        if "_" in words[i][0]:
-            word_list = phrase.split('_')
-            word = ""
-            for i in range(len(word_list)):
-                word += word_list[i]
-                if i < len(word_list)-1:
-                    word += " "
-            phrase = word 
+        # if "row" in words[i][0]:
+        #     phrase = words[i][0].split('-')[1]
+        # if "_" in words[i][0]:
+        #     word_list = phrase.split('_')
+        #     word = ""
+        #     for i in range(len(word_list)):
+        #         word += word_list[i]
+        #         if i < len(word_list)-1:
+        #             word += " "
+        #     phrase = word 
         
         with open('words_processed.txt', 'a') as f:
             f.write("{}\n".format(phrase))
