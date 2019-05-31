@@ -93,12 +93,12 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
     create the train set (x_train, y_train)
     @return x_train, y_train
     """
-    words = pd.read_csv('/nlp/data/dkeren/resnet34_img_embedding.txt', sep=' ', header=None).values
+    words = pd.read_csv(paths['image_embedding'], sep=' ', header=None).values
     # save all words in a txt file k
     np.savetxt('/nlp/data/dkeren/words.txt', words[:,0], fmt="%s")
-    word_dict = Magnitude(word_magnitude_file)
+    word_dict = Magnitude(paths['word_magnitude'])
     #img_dict = Magnitude('/data1/embeddings/pymagnitude/image.magnitude')
-    img_dict = Magnitude(image_magnitude_file)
+    img_dict = Magnitude(paths['image_magnitude'])
     # TODO: skip over words with all NaNs    
  
     # create a file of processed words (no annotations of translation)
@@ -133,9 +133,9 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
         # if all_nan == img_embedding.shape[0]:
             
         # add to x_train and y_train
-        with open('/nlp/data/dkeren/x_train1.txt', 'a') as f:
+        with open(paths['x_train'], 'a') as f:
             np.savetxt(f, word_embedding.reshape(1, word_embedding.shape[0]))
-        with open('/nlp/data/dkeren/y_train1.txt', 'a') as f:
+        with open(paths['y_train'], 'a') as f:
             np.savetxt(f, img_embedding.reshape(1, img_embedding.shape[0]))
 
 #create_image_embedding(folder_name)
@@ -147,8 +147,8 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
 folder_path = "/nlp/data/dkeren/" + sys.argv[1]
 data_path = '/nlp/data/dkeren/img_embedding_' + sys.argv[1] + ".txt"
 # TODO: for later
-word_magnitude_file = '/nlp/data/dkeren/crawl-300d-2M.magnitude'
-image_magnitude_file = '/nlp/data/dkeren/img.magnitude'
+#word_magnitude_file = '/nlp/data/dkeren/crawl-300d-2M.magnitude'
+#image_magnitude_file = '/nlp/data/dkeren/img.magnitude'
 if sys.argv[1] == 'train': 
     create_train_set(word_magnitude_file,image_magnitude_file)
 else: 

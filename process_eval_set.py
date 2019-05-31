@@ -59,7 +59,7 @@ def aggregate_set(eval_set_type):
     @returns vis_set: a numpy array of zs/vis words, associated with word embeddings
     """
     path = paths['eval_dir']
-    word_dict = Magnitude(paths['word_embedding'])
+    word_dict = Magnitude(paths['word_magnitude'])
     check_duplicates_dict = {}
     # open all _zs and _vis.txt files
     for i in range(5):
