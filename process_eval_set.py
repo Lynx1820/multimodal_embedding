@@ -38,17 +38,17 @@ def split_eval(eval_set_list):
     Split each eval set into a VIS set and a ZS set based on the words processed 
     """
     
-    vis_words = pd.read_csv(paths['code_dir'] + "/words_processed.txt", header=None).values
+    vis_words = pd.read_csv(paths['code_dir'] + "/words_processed.txt", sep="\t",  header=None).values
     counter = 0 # to mark eval set 
 
     for eval_set in eval_set_list:
         for i in range(eval_set.shape[0]):
             # check if both words in the word pair have image embeddings 
             if eval_set[i][0] in vis_words and eval_set[i][1] in vis_words:
-                with open(paths['eval_dir'] + str(counter)+'_vis.txt', 'a') as f:
+                with open(paths['eval_dir'] + "/" + str(counter)+'_vis.txt', 'a') as f:
                     np.savetxt(f, eval_set[i].reshape(1, eval_set[i].shape[0]), fmt='%s')
             else:
-                with open(paths['eval_dir'] + str(counter)+'_zs.txt', 'a') as f:
+                with open(paths['eval_dir'] + "/" +  str(counter)+'_zs.txt', 'a') as f:
                     np.savetxt(f, eval_set[i].reshape(1, eval_set[i].shape[0]), fmt='%s')
         counter += 1
 
@@ -59,14 +59,14 @@ def aggregate_set(eval_set_type):
     @returns vis_set: a numpy array of zs/vis words, associated with word embeddings
     """
     path = paths['eval_dir']
-    word_dict = Magnitude(paths['word_embedding'])
+    word_dict = Magnitude(paths['word_magnitude'])
     check_duplicates_dict = {}
     # open all _zs and _vis.txt files
     for i in range(5):
         if eval_set_type == 'vis':
-            eval_set = pd.read_csv(path+str(i)+'_vis.txt', sep=' ', header=None).values
+            eval_set = pd.read_csv(path+ "/" + str(i)+'_vis.txt', sep=' ', header=None).values
         elif eval_set_type == 'zs':
-            eval_set = pd.read_csv(path+str(i) + '_zs.txt', sep= ' ', header=None).values
+            eval_set = pd.read_csv(path+ "/" + str(i) + '_zs.txt', sep= ' ', header=None).values
         
         for i in range(eval_set.shape[0]):
             # if this word has never been added to the prediction set

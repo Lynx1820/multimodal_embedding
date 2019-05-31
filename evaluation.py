@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 import os
-import config
+import configparser
 from pymagnitude import *
 import pickle 
 
@@ -77,7 +77,7 @@ def evaluate(eval_set_type, word_dict, dict_format):
     """ 
     path = paths['eval_dir']
     for i in range(6):
-        eval_set = pd.read_csv(path+str(i)+'_'+eval_set_type+'.txt', sep=' ', header=None).as_matrix()
+        eval_set = pd.read_csv(path+"/"+str(i)+'_'+eval_set_type+'.txt', sep=' ', header=None).as_matrix()
         if dict_format == 'dict':
             model_sim = compute_sim(eval_set, word_dict)
         else:
@@ -153,6 +153,8 @@ if __name__ == '__main__':
     # comment out main() if this function is called()
     args = parse_args()
     #convert_dict_to_txt('model/fasttext')
-    
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    paths = config['PATHS']
     main()
 
