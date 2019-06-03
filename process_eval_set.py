@@ -16,19 +16,19 @@ def get_eval_set_list(paths):
     """
     Wordsim-sim, wordsim-rel, simlex, MEN, SemSim, VisSim
     """
-    simlex = pd.read_csv(paths['eval_dir'] + "/SimLex-999/SimLex-999.txt", sep="\t", header=0)
+    simlex = pd.read_csv(paths['metrics_dir'] + "/SimLex-999/SimLex-999.txt", sep="\t", header=0)
     simlex = simlex[['word1', 'word2', 'SimLex999']].values
 
-    wordsim_sim = pd.read_csv(paths['eval_dir'] + '/wordsim353_sim_rel/wordsim_similarity_goldstandard.txt', sep='\t', header=None).values
+    wordsim_sim = pd.read_csv(paths['metrics_dir'] + '/wordsim353_sim_rel/wordsim_similarity_goldstandard.txt', sep='\t', header=None).values
     
-    wordsim_rel = pd.read_csv(paths['eval_dir'] + '/wordsim353_sim_rel/wordsim_relatedness_goldstandard.txt', sep='\t', header=None).values
+    wordsim_rel = pd.read_csv(paths['metrics_dir'] + '/wordsim353_sim_rel/wordsim_relatedness_goldstandard.txt', sep='\t', header=None).values
     
-    semsim = pd.read_csv(paths['eval_dir'] + '/SemSim/SemSim.txt', sep='\t', header=0)
+    semsim = pd.read_csv(paths['metrics_dir'] + '/SemSim/SemSim.txt', sep='\t', header=0)
     semsim['WORD1'], semsim['WORD2'] = semsim['WORDPAIR'].str.split('#', 1).str
     sem = semsim[['WORD1', 'WORD2', 'SEMANTIC']].values
     sim = semsim[['WORD1', 'WORD2', 'VISUAL']].values
     
-    men = pd.read_csv(paths['eval_dir'] + '/MEN/MEN_dataset_natural_form_full', sep= " ", header=None).values
+    men = pd.read_csv(paths['metrics_dir'] + '/MEN/MEN_dataset_natural_form_full', sep= " ", header=None).values
     
     eval_set_list = [wordsim_sim, wordsim_rel, simlex, men, sem, sim]
     return eval_set_list
@@ -139,8 +139,11 @@ def main():
     print("All ZS/VIS words are collected in pred_set in multimodal folder.")
 
 if __name__ == '__main__':
+    if len(sys.argv) < 1:
+        print("config file missing")
+        exit(1)
     config = configparser.ConfigParser()
-    config.read('config.ini')
+    config.read(sys.argv[1])
     paths = config['PATHS']
     main()
 

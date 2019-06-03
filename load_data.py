@@ -1,5 +1,5 @@
 """
-Purpose:
+1;5202;0cPurpose:
  - Collect image embeddings in one txt file, convert to Magnitude in command line 
  - Create the training set (x_train, y_train)
 """
@@ -9,7 +9,7 @@ import pickle
 import pandas as pd 
 import os
 from pymagnitude import *
-
+import configparser
 def create_image_embedding(folder_name):
     """
     create one image embedding for each word by average pooling all image feature vectors
@@ -88,14 +88,14 @@ def create_image_embedding_resnet(data_path, folder_name):
     print("Done average pooling, words" )
     print(len(word_to_index.keys())) 
 # 
-def create_train_set(word_magnitude_file,image_magnitude_file):
+def create_train_set():
     """
     create the train set (x_train, y_train)
     @return x_train, y_train
     """
     words = pd.read_csv(paths['image_embedding'], sep=' ', header=None).values
     # save all words in a txt file k
-    np.savetxt('/nlp/data/dkeren/words_uc.txt', words[:,0], fmt="%s")
+    #np.savetxt('/nlp/data/dkeren/words_uc.txt', words[:,0], fmt="%s")
     word_dict = Magnitude(paths['word_magnitude'])
     #img_dict = Magnitude('/data1/embeddings/pymagnitude/image.magnitude')
     img_dict = Magnitude(paths['image_magnitude'])
@@ -105,9 +105,10 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
     # query for processed words' embeddings
     for i in range(words.shape[0]):
         phrase = words[i][0].replace('_', ' ')
-        # convert word, e.g row-writings to writings 
-        # if "row" in words[i][0]:
-        #     phrase = words[i][0].split('-')[1]
+        # convert word, e.g row-writings to writings
+        # TODO: comment out, just keep to handle old code 
+        if "row" in words[i][0]:
+             phrase = phrase.split('-')[1]
         # if "_" in words[i][0]:
         #     word_list = phrase.split('_')
         #     word = ""
@@ -117,13 +118,13 @@ def create_train_set(word_magnitude_file,image_magnitude_file):
         #             word += " "
         #     phrase = word 
         
-        with open('words_processed.txt', 'a') as f:
+        with open(paths['code_dir'] + '/words_processed.txt', 'a') as f:
             f.write("{}\n".format(phrase))
         word_embedding = word_dict.query(phrase) #query word embedding for image word
         check_nan = np.isnan(word_embedding)
         all_nan = check_nan[check_nan==True].shape[0] #number of nans
         if all_nan == word_embedding.shape[0]: print("Nan: " + phrase)
-        img_embedding = img_dict.query(unprocessed_word)
+        img_embedding = img_dict.query(phrase)
         check_nan = np.isnan(img_embedding)
         all_nan = check_nan[check_nan==True].shape[0]
         # check if a word has valid image vectors 
@@ -149,7 +150,13 @@ data_path = '/nlp/data/dkeren/img_embedding_' + sys.argv[1] + ".txt"
 # TODO: for later
 #word_magnitude_file = '/nlp/data/dkeren/crawl-300d-2M.magnitude'
 #image_magnitude_file = '/nlp/data/dkeren/img.magnitude'
+if len(sys.argv) < 2:
+    print("Need config file")
+    exit(1)
+config = configparser.ConfigParser()
+config.read(sys.argv[2])
+paths = config['PATHS']
 if sys.argv[1] == 'train': 
-    create_train_set(word_magnitude_file,image_magnitude_file)
+    create_train_set()
 else: 
     create_image_embedding_resnet(data_path, folder_path)

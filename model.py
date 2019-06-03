@@ -1,5 +1,5 @@
 """
-Purpose:
+1;5202;0cPurpose:
 - Train models 
 - Predict embeddings
 - Save embeddings to dictionaries 
@@ -138,8 +138,8 @@ def main():
         model_path = args.l
         model.load_model() 
     
-    vis_pred_set = pd.read_csv(paths['eval'] +'pred_set_vis.txt', sep=' ', header=None).values
-    zs_pred_set = pd.read_csv(paths['eval'] +'pred_set_zs.txt', sep=' ', header=None).values
+    vis_pred_set = pd.read_csv(paths['eval_dir'] +'/pred_set_vis.txt', sep=' ', header=None).values
+    zs_pred_set = pd.read_csv(paths['eval_dir'] +'/pred_set_zs.txt', sep=' ', header=None).values
     vis_embedding = model.predict(vis_pred_set[:, 1:])
     zs_embedding = model.predict(zs_pred_set[:, 1:])
      
