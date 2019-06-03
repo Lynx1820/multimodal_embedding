@@ -136,9 +136,13 @@ def main():
         evaluate('zs', word_dict_zs, 'dict', paths)
         evaluate_all(eval_set_list, word_dict_all, 'dict')
     # evaluate a concatenated model
+    elif arg.model == 'word_mode': 
+        word_dict = Magnitude(paths['word_magnitude'])
+        evaluate('vis', fused_dict, 'magnitude')
+        evaluate('zs', fused_dict, 'magnitude')
+        evaluate_all(eval_set_list, fused_dict, 'magnitude')
     else:    
         word_dict = Magnitude('/data1/embeddings/pymagnitude/word.magnitude')
-        
         if args.model == 'c_linear':        
             pred_dict = Magnitude('/data1/embeddings/pymagnitude/predicted_linear.magnitude')
         else:        
