@@ -120,18 +120,17 @@ def main():
     paths = config['PATHS']
     # load evaluation sets
     eval_set_list = get_eval_set_list(paths)
-
-    # open dictionaries that contains predicted embeddings
-    with open(args.path+"_vis.p", 'rb') as fp:
-        word_dict_vis = pickle.load(fp)
-    with open(args.path+"_zs.p", 'rb') as fp:
-        word_dict_zs = pickle.load(fp)
-    with open(args.path+"_all.p", 'rb') as fp:
-        word_dict_all = pickle.load(fp)
     
     #args.m: linear, neural, c_linear, c_neural
     # evaluate a normal model (not concatenated)
     if args.model == 'normal':
+        # open dictionaries that contains predicted embeddings
+        with open(args.path+"_vis.p", 'rb') as fp:
+            word_dict_vis = pickle.load(fp)
+        with open(args.path+"_zs.p", 'rb') as fp:
+            word_dict_zs = pickle.load(fp)
+        with open(args.path+"_all.p", 'rb') as fp:
+            word_dict_all = pickle.load(fp)
         evaluate('vis', word_dict_vis, 'dict', paths)
         evaluate('zs', word_dict_zs, 'dict', paths)
         evaluate_all(eval_set_list, word_dict_all, 'dict')
