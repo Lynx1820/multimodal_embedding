@@ -111,17 +111,20 @@ def parse_args():
     parser.add_argument("-e", default=25, type=int, help="num of epochs for training, default=25 for neural net, 175 for linear")
     parser.add_argument("-s", type=str, help="path for saving model")
     parser.add_argument("-l", type=str, help="path for loading model")
+    parser.add_argument("-c", type=str, help="path to config file")
     args = parser.parse_args()
     return args
 
 def main():
     args = parse_args()
-    config = configparser.ConfigParser()
-    config.read('config.ini')
-    paths = config['PATHS']
+    
+    if args.c == None: 
+        raise Exception("Need config file")
     if args.s == None and args.l == None:
         raise Exception("Either save or load a model")
-    
+    config = configparser.ConfigParser()
+    config.read(args.c)
+    paths = config['PATHS']
     #x_train = pd.read_csv("/data1/minh/multimodal/x_train.txt", sep=" ", header=None)
     y_train = pd.read_csv(paths['y_train'], sep=" ", header=None)
     x_train = pd.read_csv(paths['x_train'], sep=" ", header=None)
