@@ -69,7 +69,7 @@ def compute_sim_magnitude(eval_set, word_dict):
     
     return word_sim
 
-def evaluate(eval_set_type, word_dict, dict_format):
+def evaluate(eval_set_type, word_dict, dict_format, paths):
     """
     Print out evaluation results (correlation, P-value) for all sets, either of type ZS or VIS 
     @param eval_set_type: Type of eval set (ZS/VIS)
@@ -116,7 +116,7 @@ def main():
     if args.c == None:
         raise Exception("Need config file")
     config = configparser.ConfigParser()
-    config.read()
+    config.read(args.c)
     paths = config['PATHS']
     # load evaluation sets
     eval_set_list = get_eval_set_list(paths)
@@ -132,8 +132,8 @@ def main():
     #args.m: linear, neural, c_linear, c_neural
     # evaluate a normal model (not concatenated)
     if args.model == 'normal':
-        evaluate('vis', word_dict_vis, 'dict')
-        evaluate('zs', word_dict_zs, 'dict')
+        evaluate('vis', word_dict_vis, 'dict', paths)
+        evaluate('zs', word_dict_zs, 'dict', paths)
         evaluate_all(eval_set_list, word_dict_all, 'dict')
     # evaluate a concatenated model
     else:    
@@ -156,8 +156,5 @@ if __name__ == '__main__':
     # comment out main() if this function is called()
     args = parse_args()
     #convert_dict_to_txt('model/fasttext')
-    config = configparser.ConfigParser()
-    config.read(args.c])
-    paths = config['PATHS']
     main()
 
