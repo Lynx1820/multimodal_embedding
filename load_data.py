@@ -43,7 +43,7 @@ def create_image_embedding(folder_name):
                 break
     print("Done average pooling")
 
-def create_image_embedding_resnet(data_path, folder_name):
+def create_image_embedding_resnet(data_path, folder_name, no_mean = False):
     """
     create one image embedding for each word by average pooling all image feature vectors
     @save img_embedding: a numpy array of image embeddings 
@@ -69,18 +69,24 @@ def create_image_embedding_resnet(data_path, folder_name):
         print("Done loading from pandas")
         #averaged = np.array([])
         start = 0
+        dfile =  open(data_path, 'a')
         for i in range(words.shape[0]-1):
             # only process English words, which start with 'row'
+            if no_mean: 
+                dfile.write(words[i] + "-"+ str(start) + "\t")
+                np.savetxt(dfile,embeddings[i].reshape(1,average_embedding.shape[0]), fmt="%s")
             if words[i] != words[i+1]:
+                if no_mean: 
+                    start = 0
+                    continue
                 end = i+1
                 img_embedding = embeddings[start:end]
                 # average pooling to create one single image embedding
                 average_embedding = img_embedding.sum(axis=0) / img_embedding.shape[0]
 
                 start = i+1
-                with open(data_path, 'a') as dfile:
-                    dfile.write(words[i] + "\t")
-                    np.savetxt(dfile, average_embedding.reshape(1,average_embedding.shape[0]), fmt="%s")
+                dfile.write(words[i] + "\t")
+                np.savetxt(dfile, average_embedding.reshape(1,average_embedding.shape[0]), fmt="%s")
                 # save all embeddings to txt, convert txt to magnitude in cmd line 
     
     #print(word_to_index.keys())
@@ -88,7 +94,7 @@ def create_image_embedding_resnet(data_path, folder_name):
     print("Done average pooling, words" )
     print(len(word_to_index.keys())) 
 # 
-def create_train_set():
+def create_train_set(no_mean = False):
     """
     create the train set (x_train, y_train)
     @return x_train, y_train
@@ -100,7 +106,7 @@ def create_train_set():
     #img_dict = Magnitude('/data1/embeddings/pymagnitude/image.magnitude')
     img_dict = Magnitude(paths['image_magnitude'])
     # TODO: skip over words with all NaNs    
- 
+    
     # create a file of processed words (no annotations of translation)
     # query for processed words' embeddings
     for i in range(words.shape[0]):
@@ -146,7 +152,7 @@ def create_train_set():
 #folder_path = "/nlp/data/dkeren/data_chunks"
 
 folder_path = "/nlp/data/dkeren/" + sys.argv[1]
-data_path = '/nlp/data/dkeren/img_embedding_' + sys.argv[1] + ".txt"
+data_path = '/nlp/data/dkeren/img_embedding_' + sys.argv[1] + "2.txt"
 # TODO: for later
 #word_magnitude_file = '/nlp/data/dkeren/crawl-300d-2M.magnitude'
 #image_magnitude_file = '/nlp/data/dkeren/img.magnitude'
@@ -156,7 +162,14 @@ if len(sys.argv) < 2:
 config = configparser.ConfigParser()
 config.read(sys.argv[2])
 paths = config['PATHS']
+
 if sys.argv[1] == 'train': 
-    create_train_set()
+    if len(sys.argv) > 2 and sys.argv[3] == 'no_mean':
+        create_train_set(True)
+    else: 
+        create_train_set()
 else: 
-    create_image_embedding_resnet(data_path, folder_path)
+    if len(sys.argv) > 2 and sys.argv[3] == 'no_mean':
+        create_image_embedding_resnet(data_path, folder_path,True)
+    else: 
+        create_image_embedding_resnet(data_path, folder_path)
