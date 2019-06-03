@@ -107,13 +107,16 @@ def parse_args():
     parser = ArgumentParser()
     parser.add_argument('model', default='normal', type=str, help='[normal, c_linear, c_neural]')
     parser.add_argument('path', type=str, help='path to dictionary that contains predicted embeddings')
+    parser.add_argument("-c", type=str, help="path to config file")
     args = parser.parse_args()
     return args
 
 def main():
     args = parse_args()
+    if args.c == None:
+        raise Exception("Need config file")
     config = configparser.ConfigParser()
-    config.read('config.ini')
+    config.read()
     paths = config['PATHS']
     # load evaluation sets
     eval_set_list = get_eval_set_list(paths)
@@ -154,7 +157,7 @@ if __name__ == '__main__':
     args = parse_args()
     #convert_dict_to_txt('model/fasttext')
     config = configparser.ConfigParser()
-    config.read('config.ini')
+    config.read(args.c])
     paths = config['PATHS']
     main()
 

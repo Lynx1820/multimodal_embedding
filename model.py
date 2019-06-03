@@ -20,15 +20,16 @@ class MultimodalEmbedding:
     """
     This class builds a linear model and a neural net that learns the mapping from word embeddings to image embeddings
     """
-    def __init__(self, x_train, y_train, args):
+    def __init__(self, x_train, y_train, args, paths):
         self.x_train = x_train 
         self.y_train = y_train
         self.args = args
+        self.paths = paths
         self.model = None
 
     def build_linear_model(self):
         self.model = Sequential()
-        self.model.add(Dense(512, input_shape=(300,)))
+        self.model.add(Dense(int(self.paths['image_emb_size']), input_shape=(300,)))
         self.model.add(Dropout(0.1)) 
         self.model.summary()
         sgd = SGD(lr=self.args.lr)
@@ -38,7 +39,7 @@ class MultimodalEmbedding:
         self.model = Sequential()
         self.model.add(Dense(self.args.u, activation="tanh", input_shape=(300,)))
         self.model.add(Dropout(0.25))
-        self.model.add(Dense(512))
+        self.model.add(Dense(int(self.paths['image_emb_size'])))
         self.model.summary()
 
         sgd = SGD(lr=self.args.lr)
@@ -130,7 +131,7 @@ def main():
     x_train = pd.read_csv(paths['x_train'], sep=" ", header=None)
     #y_train = pd.read_csv("/data1/minh/multimodal/y_train.txt", sep=" ", header=None)
     print("Done loading x_train and y_train")
-    model = MultimodalEmbedding(x_train, y_train, args)
+    model = MultimodalEmbedding(x_train, y_train, args, paths)
     
     # if args.s: train, save and load model in one go
     # if args.l: load an old model for prediction
