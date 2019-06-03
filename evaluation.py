@@ -140,7 +140,7 @@ def main():
         word_dict = Magnitude(paths['word_magnitude'])
         evaluate('vis', word_dict, 'magnitude')
         evaluate('zs', word_dict, 'magnitude')
-        evaluate_all(eval_set_list, fused_dict, 'magnitude')
+        evaluate_all(eval_set_list, word_dict, 'magnitude')
     else:    
         word_dict = Magnitude('/data1/embeddings/pymagnitude/word.magnitude')
         if args.model == 'c_linear':        
