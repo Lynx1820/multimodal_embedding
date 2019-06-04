@@ -135,10 +135,10 @@ def main():
         evaluate('zs', word_dict_zs, 'dict', paths)
         evaluate_all(eval_set_list, word_dict_all, 'dict')
     # evaluate a concatenated model
-    elif arg.model == 'word_mode': 
+    elif args.model == 'word_mode': 
         word_dict = Magnitude(paths['word_magnitude'])
-        evaluate('vis', word_dict, 'magnitude')
-        evaluate('zs', word_dict, 'magnitude')
+        evaluate('vis', word_dict, 'magnitude', paths)
+        evaluate('zs', word_dict, 'magnitude', paths)
         evaluate_all(eval_set_list, word_dict, 'magnitude')
     else:    
         word_dict = Magnitude('/data1/embeddings/pymagnitude/word.magnitude')
