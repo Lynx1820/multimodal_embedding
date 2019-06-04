@@ -141,11 +141,11 @@ def main():
         evaluate('zs', word_dict, 'magnitude', paths)
         evaluate_all(eval_set_list, word_dict, 'magnitude')
     else:    
-        word_dict = Magnitude('/data1/embeddings/pymagnitude/word.magnitude')
+        word_dict = Magnitude(paths['word_magnitude'])
         if args.model == 'c_linear':        
-            pred_dict = Magnitude('/data1/embeddings/pymagnitude/predicted_linear.magnitude')
+            pred_dict = Magnitude(paths['lin_magnitude'])
         else:        
-            pred_dict = Magnitude('/data1/embeddings/pymagnitude/predicted_neural.magnitude')
+            pred_dict = Magnitude(paths['nn_magnitude'])
         # concatenate a model with glove 
         fused_dict = Magnitude(word_dict, pred_dict)
         print('Dimension of concatenated vectors: {}'.format(fused_dict.dim))
