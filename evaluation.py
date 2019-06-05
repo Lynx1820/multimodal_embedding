@@ -150,8 +150,8 @@ def main():
         fused_dict = Magnitude(word_dict, pred_dict)
         print('Dimension of concatenated vectors: {}'.format(fused_dict.dim))
 
-        evaluate('vis', fused_dict, 'magnitude')
-        evaluate('zs', fused_dict, 'magnitude')
+        evaluate('vis', fused_dict, 'magnitude',paths)
+        evaluate('zs', fused_dict, 'magnitude',paths)
         evaluate_all(eval_set_list, fused_dict, 'magnitude')
 
 if __name__ == '__main__':
