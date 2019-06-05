@@ -140,7 +140,12 @@ def main():
         evaluate('vis', word_dict, 'magnitude', paths)
         evaluate('zs', word_dict, 'magnitude', paths)
         evaluate_all(eval_set_list, word_dict, 'magnitude')
-    else:    
+    elif args.model == 'img_mode': 
+        img_dict = Magnitude(paths['img_magnitude'])
+        evaluate('vis', img_dict, 'magnitude', paths)
+        evaluate('zs', img_dict, 'magnitude', paths)
+        evaluate_all(eval_set_list, word_dict, 'magnitude')
+    elif args.model == 'c_linear' or args.model == 'c_neural':    
         word_dict = Magnitude(paths['word_magnitude'])
         if args.model == 'c_linear':        
             pred_dict = Magnitude(paths['lin_magnitude'])
