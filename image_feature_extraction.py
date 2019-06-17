@@ -24,25 +24,18 @@ def build_dataframe(dict_fn, config, filter_mode = True):
         
     with open(paths['mmid_dir'] + "/" + dict_fn + "/index.tsv") as f:
         lines = f.read().splitlines()
-        for i, line in enumerate(lines):
-            english_translation = line.split('\t')[0]
-            if filter_mode:
-                    if word in word_magnitude: 
-                        translation = word
-                        break 
-                if translation == None: 
-                    continue
-            else: 
-                translation = english_translations[0]
+        for line in lines:
+            english_translation, index = line.split('\t')
+            if filter_mode and english_translation not in word_magnitude: continue
             ends = ["01","02","03","04","05","06","07","08","09","10"]
             for img_num in ends:
-                path =  paths['mmid_dir'] + "/" + dict_fn + "/" + str(i) + "/" + img_num + ".jpg"
+                path =  paths['mmid_dir'] + "/" + dict_fn + "/" + str(index) + "/" + img_num + ".jpg"
                 exists = os.path.isfile(path)
                 # check to see whether the path exist
                 if not exists: 
                     continue
                 img_paths.append(path) 
-                trans.append(translation)
+                trans.append(english_translation)
 
     #dataframe with paths and translations
     df = pd.DataFrame({'paths': img_paths, 'trans' : trans}).dropna()
