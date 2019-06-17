@@ -11,45 +11,45 @@ import torchvision.transforms as transforms
 from torch.autograd import Variable
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader
+import configparser
+from pymagnitude import *
 
-#base path to images
-img_path = 'data/MMID/raw'
-dict_path = '/nlp/data/MMID/dictionaries' 
-
-
-dictionaries = {"dict.es":"scale-spanish-package", "dict.fr":"scale-french-package", "dict.id":"scale-indonesian-package", "dict.it":"scale-italian-package", "dict.nl":"scale-dutch-package"}
-def build_dataframe():
-    # All 5 dictionaries
+def build_dataframe(dict_fn, filter_mode = True):
     paths = []
     trans = []
-    for dict_fn in tqdm(dictionaries):
-        with open(str(dict_path) + "/" + dict_fn) as f:
-            lines = f.read().splitlines()
-            for i, line in enumerate(lines):
-                english_translations = line.split('\t')[1:]
-                if "(name)" in english_translations: 
+    word_magnitude = None
+    if filter_mode: 
+        word_magnitude =  Magnitude(config['word_magnitude']) 
+        
+    with open(config['mmid_dir'] + "/" + dict_fn + "/index.tsv") as f:
+        lines = f.read().splitlines()
+        for i, line in enumerate(lines):
+            english_translations = line.split('\t')[1:]
+            if filter_mode: 
+                translation = None
+                for word in english_translations:
+                    if word in word_magnitude: 
+                        translation = word
+                        break 
+                if translation == None: 
                     continue
-                # for every translation, we ge the image path_id - which will then extract features for 
-                #for translation in english_translations:
-                translation = english_translations[0] #since the image is the same, we just train on the first word
-                ends = ["01","02","03","04","05","06","07","08","09","10"]
-                for img_num in ends:
-                    path =  img_path+ "/" + dictionaries[dict_fn] + "/" + str(i) + "/" + img_num + ".jpg"
-                    exists = os.path.isfile(path)
-                    # check to see whether the path exist
-                    if not exists: 
-                        #print("Could not find file: " +  path)
-                        continue
-                    paths.append(path) 
-                    trans.append(translation)
+            else: 
+                translation = english_translations[0]
+            ends = ["01","02","03","04","05","06","07","08","09","10"]
+            for img_num in ends:
+                path =  config['mmid_dir'] + "/" + dict_fn + "/" + str(i) + "/" + img_num + ".jpg"
+                exists = os.path.isfile(path)
+                # check to see whether the path exist
+                if not exists: 
+                    continue
+                paths.append(path) 
+                trans.append(translation)
 
     #dataframe with paths and translations
     df = pd.DataFrame({'paths': paths, 'trans' : trans}).dropna()
     df.to_csv("train_df.csv", sep='\t')
 
-# this is a hook (learned about it here: https://forums.fast.ai/t/how-to-find-similar-images-based-on-final-embedding-layer/16903/13)
-# hooks are used for saving intermediate computations
-class SaveFeatures():
+class saveFeatures():
     features=None
     def __init__(self, m): 
         self.hook = m.register_forward_hook(self.hook_fn)
@@ -71,19 +71,18 @@ def extract_features(train_data):
     #This changes the forwards layers of the model 
     learn.fit_one_cycle(2)
 
-    sf = SaveFeatures(learn.model[1][5]) ## Output before the last FC layer
-    ## By running this feature vectors would be saved in sf variable initated above
-    _= learn.get_preds(my_data.train_ds)
-    #_= learn.get_preds(DatasetType.Valid)
+    sf = saveFeatures(learn.model[1][5]) 
 
-    #img_paths = [str(x) for x in (list(my_data.train_ds.items))]
-    #feature_dict = dict(zip(trans,sf.features))
-    #img_dict = dict(zip(trans,img_path))
+    _= learn.get_preds(my_data.train_ds)
+
     return sf.features
 
-#build_dataframe()
-#exit(0)
-#load dataframe or create dataframe
+
+
+config = configparser.ConfigParser()
+config.read(sys.argv[2])
+paths = config['PATHS']
+
 full_df = pd.read_csv('/nlp/data/dkeren/train_df.csv', sep='\t', index_col=[0])
 process_id = int(sys.argv[1])
 df_split = np.array_split(full_df,100)[process_id]
@@ -93,7 +92,7 @@ features = extract_features(df_split)
 translations = df_split['trans']
 filename = "/nlp/data/dkeren/img_embeddings_resnet50-" + str(process_id) + ".txt"
 print("done")
-#np.savez(filename, df_split['trans'], fea)
+
 for word, arr in zip(translations,features):
   with open(filename, 'a') as f:
       f.write(word + "\t")
