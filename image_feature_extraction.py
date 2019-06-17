@@ -15,20 +15,18 @@ import configparser
 from pymagnitude import *
 import argparse
 
-def build_dataframe(dict_fn, filter_mode = True):
-    paths = []
+def build_dataframe(dict_fn, config, filter_mode = True):
+    img_paths = []
     trans = []
     word_magnitude = None
     if filter_mode: 
-        word_magnitude =  Magnitude(config['word_magnitude']) 
+        word_magnitude =  Magnitude(paths['word_magnitude']) 
         
-    with open(config['mmid_dir'] + "/" + dict_fn + "/index.tsv") as f:
+    with open(paths['mmid_dir'] + "/" + dict_fn + "/index.tsv") as f:
         lines = f.read().splitlines()
         for i, line in enumerate(lines):
-            english_translations = line.split('\t')[1:]
-            if filter_mode: 
-                translation = None
-                for word in english_translations:
+            english_translation = line.split('\t')[0]
+            if filter_mode:
                     if word in word_magnitude: 
                         translation = word
                         break 
@@ -38,16 +36,16 @@ def build_dataframe(dict_fn, filter_mode = True):
                 translation = english_translations[0]
             ends = ["01","02","03","04","05","06","07","08","09","10"]
             for img_num in ends:
-                path =  config['mmid_dir'] + "/" + dict_fn + "/" + str(i) + "/" + img_num + ".jpg"
+                path =  paths['mmid_dir'] + "/" + dict_fn + "/" + str(i) + "/" + img_num + ".jpg"
                 exists = os.path.isfile(path)
                 # check to see whether the path exist
                 if not exists: 
                     continue
-                paths.append(path) 
+                img_paths.append(path) 
                 trans.append(translation)
 
     #dataframe with paths and translations
-    df = pd.DataFrame({'paths': paths, 'trans' : trans}).dropna()
+    df = pd.DataFrame({'paths': img_paths, 'trans' : trans}).dropna()
     df.to_csv("train_df.csv", sep='\t')
 
 class saveFeatures():
@@ -90,8 +88,9 @@ if __name__ == '__main__':
     config.read(params.config)
     paths = config['PATHS']
     dict_fn = params.dict
-    assert os.path.isfile(paths['mmid_dir'] + "/" + dict_fn)
-    build_dataframe(dict_fn) 
+    assert os.path.isdir(paths['mmid_dir'] + "/" + dict_fn)
+    assert os.path.isfile(paths['word_magnitude'])
+    build_dataframe(dict_fn, paths) 
 
 # full_df = pd.read_csv('/nlp/data/dkeren/train_df.csv', sep='\t', index_col=[0])
 # process_id = int(sys.argv[1])
