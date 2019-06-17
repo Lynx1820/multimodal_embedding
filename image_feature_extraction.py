@@ -13,6 +13,7 @@ from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 import configparser
 from pymagnitude import *
+import argparse
 
 def build_dataframe(dict_fn, filter_mode = True):
     paths = []
@@ -78,22 +79,31 @@ def extract_features(train_data):
     return sf.features
 
 
+if __name__ == '__main__': 
+    parser = argparse.ArgumentParser(description='Image Feature Extraction')
+    parser.add_argument("--config", type=str, default=None, help= 'config file to specify paths')
+    parser.add_argument("--dict", type=str, default=None, help='image dictionary')
+    params = parser.parse_args()
+    # check params
+    assert os.path.isfile(params.config)
+    config = configparser.ConfigParser()
+    config.read(params.config)
+    paths = config['PATHS']
+    dict_fn = params.dict
+    assert os.path.isfile(paths['mmid_dir'] + dict_fn)
+    build_dataframe(dict_fn) 
 
-config = configparser.ConfigParser()
-config.read(sys.argv[2])
-paths = config['PATHS']
+# full_df = pd.read_csv('/nlp/data/dkeren/train_df.csv', sep='\t', index_col=[0])
+# process_id = int(sys.argv[1])
+# df_split = np.array_split(full_df,100)[process_id]
+# df_split = df_split.reset_index()
+# df_split = df_split.drop(columns=['index'])
+# features = extract_features(df_split)
+# translations = df_split['trans']
+# filename = "/nlp/data/dkeren/img_embeddings_resnet50-" + str(process_id) + ".txt"
+# print("done")
 
-full_df = pd.read_csv('/nlp/data/dkeren/train_df.csv', sep='\t', index_col=[0])
-process_id = int(sys.argv[1])
-df_split = np.array_split(full_df,100)[process_id]
-df_split = df_split.reset_index()
-df_split = df_split.drop(columns=['index'])
-features = extract_features(df_split)
-translations = df_split['trans']
-filename = "/nlp/data/dkeren/img_embeddings_resnet50-" + str(process_id) + ".txt"
-print("done")
-
-for word, arr in zip(translations,features):
-  with open(filename, 'a') as f:
-      f.write(word + "\t")
-      np.savetxt(f, arr.reshape(1,len(arr)), delimiter=' ')
+# for word, arr in zip(translations,features):
+#   with open(filename, 'a') as f:
+#       f.write(word + "\t")
+#       np.savetxt(f, arr.reshape(1,len(arr)), delimiter=' ')
