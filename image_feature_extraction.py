@@ -102,11 +102,12 @@ if __name__ == '__main__':
     # TODO: if everythings works then maybe don't save the file or delete
     # #build_dataframe(dict_fn, paths) 
     for process_id in range(params.workers): 
-        cmd = ("python qrun " + str(process_id) + " "  + str(params.workers) + " " + params.config).split()
+        cmd = ("qrun.sh " + str(process_id) + " "  + str(params.workers) + " " + params.config + " " + params.dict).split()
         try: 
             subprocess.check_output(cmd)        
         except: 
             raise Exception("There was an error while running qsub to extract features")
     print("Finished creating embeddings")
     ##TODO Evaluate Image embeddings
+    
 
