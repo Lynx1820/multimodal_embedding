@@ -90,7 +90,7 @@ if __name__ == '__main__':
     config.read(params.config)
     paths = config['PATHS']
     dict_fn = params.dict
-    assert os.path.isfile(paths['mmid_dir'] + dict_fn)
+    assert os.path.isfile(paths['mmid_dir'] + "/" + dict_fn)
     build_dataframe(dict_fn) 
 
 # full_df = pd.read_csv('/nlp/data/dkeren/train_df.csv', sep='\t', index_col=[0])
