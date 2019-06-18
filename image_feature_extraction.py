@@ -43,7 +43,7 @@ def build_dataframe(dict_fn, config, filter_mode = True):
     df = pd.DataFrame({'paths': img_paths, 'trans' : trans}).dropna()
     df.to_csv("train_df.csv", sep='\t')
 
-class saveFeatures():
+class SaveFeatures():
     features=None
     def __init__(self, m): 
         self.hook = m.register_forward_hook(self.hook_fn)
@@ -67,7 +67,7 @@ def extract_features(train_data):
     #This changes the forwards layers of the model 
     learn.fit_one_cycle(2)
 
-    sf = saveFeatures(learn.model[1][5]) 
+    sf = SaveFeatures(learn.model[1][5]) 
 
     _= learn.get_preds(my_data.train_ds)
 
@@ -80,6 +80,7 @@ if __name__ == '__main__':
     parser.add_argument("--dict", type=str, default=None, help='image dictionary')
     parser.add_argument("--workers", type=int, default=5, help="number of processes to do work in the distributed cluster")
     parser.add_argument("--pid", type=int, default=None, help="set to true when just extracting features" )
+    parser.add_argument("--mode",default="build", help="build: to build the df / create emb, eval: evaluate embeddings")
 
     params = parser.parse_args()
     # check params 
@@ -90,21 +91,10 @@ if __name__ == '__main__':
     dict_fn = params.dict
     assert os.path.isdir(paths['mmid_dir'] + "/" + dict_fn)
     assert os.path.isfile(paths['word_magnitude'])
+    assert params.mode == 'build' or params.mode == 'eval' or params.mode == 'partition'
+    assert if params.mode == 'partition': params.pid != None
 #    assert os.path.isfile('train_df.csv')
-    if params.pid != None: 
-        df_split = pd.read_csv('train_df.csv', sep='\t', index_col=[0])
-        df_split = np.array_split(df_split, params.workers)[params.pid].reset_index().drop(columns=['index'])
-        features = extract_features(df_split)
-        translations = df_split['trans']
-        filename = paths['data_dir'] + "img_embeddings_resnet50-" + str(params.pid) + ".txt"
-        with open(filename, 'a') as f:
-            for word, arr in zip(translations,features):
-                f.write(word + "\t")
-                np.savetxt(f, arr.reshape(1,len(arr)), delimiter=' ')
-        exit(0)
-    
-    # TODO: if everythings works then maybe don't save the file or delete
-    else:
+    if params.mode == 'build': 
         build_dataframe(dict_fn, paths) 
         # TODO: if everythings works then maybe don't save the file or delete
         # #build_dataframe(dict_fn, paths) 
@@ -116,8 +106,26 @@ if __name__ == '__main__':
             except: 
                 raise Exception("There was an error while running qsub to extract features")
             # TODO: sleeping to ensure load get to different machines, is there better way? 
-            time.sleep(5) 
+            time.sleep(10) 
         print("Finished creating embeddings")
+    elif params.mode == 'partition': 
+        df_split = pd.read_csv('train_df.csv', sep='\t', index_col=[0])
+        df_split = np.array_split(df_split, params.workers)[params.pid].reset_index().drop(columns=['index'])
+        features = extract_features(df_split)
+        translations = df_split['trans']
+        filename = paths['data_dir'] + "img_embeddings_resnet50-" + str(params.pid) + ".txt"
+        with open(filename, 'a') as f:
+            for word, arr in zip(translations,features):
+                f.write(word + "\t")
+                np.savetxt(f, arr.reshape(1,len(arr)), delimiter=' ')
+        exit(0)
+    elif params.mode == 'eval': 
+        df_split = pd.read_csv('train_df.csv', sep='\t', index_col=[0])
+    else: 
+        print("options are: eval, build, partition")
+        exit(0)
+        
+        
     ##TODO Evaluate Image embeddings
     
 
