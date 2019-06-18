@@ -92,10 +92,10 @@ if __name__ == '__main__':
     assert os.path.isdir(paths['mmid_dir'] + "/" + dict_fn)
     assert os.path.isfile(paths['word_magnitude'])
     assert params.mode == 'build' or params.mode == 'eval' or params.mode == 'partition'
-    assert if params.mode == 'partition': params.pid != None
+    #assert (if params.mode == 'partition': params.pid != None)
 #    assert os.path.isfile('train_df.csv')
     if params.mode == 'build': 
-        build_dataframe(dict_fn, paths) 
+        #build_dataframe(dict_fn, paths) 
         # TODO: if everythings works then maybe don't save the file or delete
         # #build_dataframe(dict_fn, paths) 
         for process_id in range(params.workers): 
