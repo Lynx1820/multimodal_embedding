@@ -81,10 +81,10 @@ def extract_features(train_data):
 if __name__ == '__main__': 
     parser = argparse.ArgumentParser(description='Image Feature Extraction')
     parser.add_argument("--config", type=str, default=None, help= 'config file to specify paths')
-    parser.add_argument("--dict", type=str, default=None, help='image dictionary')
+    parser.add_argument("--dict", action='append', default=None, help='image dictionary')
     parser.add_argument("--workers", type=int, default=5, help="number of processes to do work in the distributed cluster")
     parser.add_argument("--pid", type=int, default=None, help="set to true when just extracting features" )
-    parser.add_argument("--mode",default="build", help="build: to build the df / create emb, eval: evaluate embeddings")
+    parser.add_argument("--mode",choices=['build', 'eval', ''], help="build: to build the df / create emb, eval: evaluate embeddings")
 
     params = parser.parse_args()
     # check params 
@@ -98,6 +98,7 @@ if __name__ == '__main__':
     assert params.mode == 'build' or params.mode == 'eval' or params.mode == 'partition'
     #assert (if params.mode == 'partition': params.pid != None)
 #    assert os.path.isfile('train_df.csv')
+    # TODO: suppprt more dictionaries
     if params.mode == 'build': 
         #build_dataframe(dict_fn, paths) 
         # TODO: if everythings works then maybe don't save the file or delete
@@ -123,29 +124,39 @@ if __name__ == '__main__':
                 f.write(word + "\t")
                 np.savetxt(f, arr.reshape(1,len(arr)), delimiter=' ')
         exit(0)
+    # TODO: Handle the different 
     elif params.mode == 'eval': 
-        files = []
-        for pid in range(params.workers):
-            curr_file = paths['data_dir'] + "/img_embeddings_resnet50-" + str(pid) + ".txt"
-            assert os.path.isfile(curr_file)
-            files.append(curr_file)
+        conc_files = {}
+        for dict_fn in params.dict:
+            files = [] 
+            tmp_file = paths['data_dir'] + "/full_img_embeddings_resnet50-" + dict_fn + ".txt"
+            for pid in range(params.workers):
+                curr_file = paths['data_dir'] + "/img_embeddings_resnet50-" + dict_fn + "-" + str(pid) + ".txt"
+                assert os.path.isfile(curr_file)
+                files.append(curr_file)
+            conc_files[tmp_file] = files
         fn = paths['data_dir'] + "/full_img_embeddings_resnet50.txt"
         magnitude_fn = paths['data_dir'] + "/full_img_embeddings_"+ params.dict +".magnitude"
         full_file = open(fn, 'w')
         words = set()
-        for filename in files: 
-            with open(filename, 'r') as file: 
-                for line in file.read():
-                    words.add(line.split('\t')[0])
-                    full_file.write(line)
+        for temp, partial_files in conc_files.items():
+            full_dict_file = open(temp, 'w')
+            for filename in partial_files: 
+                with open(filename, 'r') as file: 
+                    for line in file.read():
+                        words.add(line.split('\t')[0])
+                        full_dict_file.write(line)
+                        full_file.write(line)
+            full_dict_file.close()
         full_file.close()
+        print("done writing new dictionaries")
         cmd = ("python -m pymagnitude.converter -i " + fn +  " -o "  + magnitude_fn).split()
 
-        #try: 
-            #print("running: " + str(cmd))
-            #subprocess.check_output(cmd)       
-        #except: 
-            #raise Exception("There was an error running" + str(cmd))
+        try: 
+            print("running: " + str(cmd))
+            subprocess.check_output(cmd)       
+        except: 
+            raise Exception("There was an error running" + str(cmd))
         eval_set_dict = get_eval_set_dict(paths)
         embeddings = Magnitude(magnitude_fn)
         for eval_name, eval_set in eval_set_dict.items():
@@ -166,7 +177,7 @@ if __name__ == '__main__':
             cor, pval = stats.spearmanr(words_sim, eval_set[:,2])
             print("Correlation for {}: {:.3f}, P-value: {:.3f}".format(eval_name, cor, pval))
 
-    else: 
+    else:  
         print("options are: eval, build, partition")
         exit(0)
         
