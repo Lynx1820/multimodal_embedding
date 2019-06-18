@@ -10,7 +10,7 @@ import torchvision.models as models
 import torchvision.transforms as transforms
 from torch.autograd import Variable
 from PIL import Image
-from process_eval_set import * 
+from process_eval_set import get_eval_set_dict 
 from evaluation import compute_pair_sim
 from torch.utils.data import Dataset, DataLoader
 from scipy import stats
@@ -30,6 +30,7 @@ def build_dataframe(dict_fn, config, filter_mode = True):
     with open(paths['mmid_dir'] + "/" + dict_fn + "/index.tsv") as f:
         lines = f.read().splitlines()
         for line in lines:
+            line = line.replace("\\t", "\t")
             english_translation, index = line.split('\t')
             if filter_mode and english_translation not in word_magnitude: continue
             ends = ["01","02","03","04","05","06","07","08","09","10"]
@@ -44,10 +45,10 @@ def build_dataframe(dict_fn, config, filter_mode = True):
 
     #dataframe with paths and translations
     df = pd.DataFrame({'paths': img_paths, 'trans' : trans}).dropna()
-    df.to_csv("train_df.csv", sep='\t')
+    df.to_csv(params.dict + "-train_df.csv", sep='\t')
 
 class SaveFeatures():
-    features=None
+    features = None
     def __init__(self, m): 
         self.hook = m.register_forward_hook(self.hook_fn)
         self.features = None
@@ -100,7 +101,7 @@ if __name__ == '__main__':
     if params.mode == 'build': 
         #build_dataframe(dict_fn, paths) 
         # TODO: if everythings works then maybe don't save the file or delete
-        # #build_dataframe(dict_fn, paths) 
+        build_dataframe(dict_fn, paths) 
         for process_id in range(params.workers): 
             cmd = ("qsub qrun.sh " + str(process_id) + " "  + str(params.workers) + " " + params.config + " " + params.dict).split()
             try:
@@ -112,23 +113,24 @@ if __name__ == '__main__':
             time.sleep(10) 
         print("Finished creating embeddings")
     elif params.mode == 'partition': 
-        df_split = pd.read_csv('train_df.csv', sep='\t', index_col=[0])
+        df_split = pd.read_csv(params.dict + '-train_df.csv', sep='\t', index_col=[0])
         df_split = np.array_split(df_split, params.workers)[params.pid].reset_index().drop(columns=['index'])
         features = extract_features(df_split)
         translations = df_split['trans']
-        filename = paths['data_dir'] + "/img_embeddings_resnet50-" + str(params.pid) + ".txt"
+        filename = paths['data_dir'] + "/img_embeddings_resnet50-" + params.dict + "-" + str(params.pid) + ".txt"
         with open(filename, 'a') as f:
             for word, arr in zip(translations,features):
                 f.write(word + "\t")
                 np.savetxt(f, arr.reshape(1,len(arr)), delimiter=' ')
         exit(0)
     elif params.mode == 'eval': 
-        df_split = pd.read_csv('train_df.csv', sep='\t', index_col=[0])
         files = []
-        for pid in range(params.workers): 
-            files.append(paths['data_dir'] + "/img_embeddings_resnet50-" + str(pid) + ".txt")
-        fn = paths['data_dir'] + '/full_img_embeddings_resnet50.txt'
-        magnitude_fn = paths['data_dir'] + '/full_img_embeddings_resnet50.magnitude'
+        for pid in range(params.workers):
+            curr_file = paths['data_dir'] + "/img_embeddings_resnet50-" + str(pid) + ".txt"
+            assert os.path.isfile(curr_file)
+            files.append(curr_file)
+        fn = paths['data_dir'] + "/full_img_embeddings_resnet50.txt"
+        magnitude_fn = paths['data_dir'] + "/full_img_embeddings_"+ params.dict +".magnitude"
         full_file = open(fn, 'w')
         words = set()
         for filename in files: 
@@ -136,21 +138,31 @@ if __name__ == '__main__':
                 for line in file.read():
                     words.add(line.split('\t')[0])
                     full_file.write(line)
-        cmd = ("python -m pymagnitude.converter -i %s -o %s" % (full_file, magnitude_fn)).split()
-        try: 
-            print("running: " + str(cmd))
-            subprocess.check_output(cmd)       
-        except: 
-            raise Exception("There was an error running" + str(cmd))
+        full_file.close()
+        cmd = ("python -m pymagnitude.converter -i " + fn +  " -o "  + magnitude_fn).split()
+
+        #try: 
+            #print("running: " + str(cmd))
+            #subprocess.check_output(cmd)       
+        #except: 
+            #raise Exception("There was an error running" + str(cmd))
         eval_set_dict = get_eval_set_dict(paths)
         embeddings = Magnitude(magnitude_fn)
-        words_sim = []
-        for eval_name, eval_set in eval_set_dict.items(): 
+        for eval_name, eval_set in eval_set_dict.items():
+            words_sim = []
             for i in range(eval_set.shape[0]):
                 word1 = eval_set[i][0]
                 word2 = eval_set[i][1]
                 if word1 in embeddings and word2 in embeddings: 
-                    words_sim.append(compute_pair_sim(embeddings.query(word1), embeddings.query(word2)))  
+                    words_sim.append(compute_pair_sim(embeddings.query(word1), embeddings.query(word2)))
+                if word1 in embeddings:
+                    print(word1)
+                if word2 in embeddings:
+                    print(word2)
+            print("word sim")
+            print(words_sim)
+            if len(words_sim) == 0:
+                continue
             cor, pval = stats.spearmanr(words_sim, eval_set[:,2])
             print("Correlation for {}: {:.3f}, P-value: {:.3f}".format(eval_name, cor, pval))
 

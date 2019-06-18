@@ -2,7 +2,7 @@
 Purpose:
 - Evaluate multimodal embeddings against 6 word similarity tests
 """
-from process_eval_set import get_eval_set_list
+from process_eval_set import get_eval_set_dict
 from argparse import ArgumentParser
 
 import numpy as np
@@ -119,7 +119,7 @@ def main():
     config.read(args.c)
     paths = config['PATHS']
     # load evaluation sets
-    eval_set_list = get_eval_set_list(paths)
+    eval_set_list = get_eval_set_dict(paths)
     
     #args.m: linear, neural, c_linear, c_neural
     # evaluate a normal model (not concatenated)
