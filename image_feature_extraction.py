@@ -15,6 +15,7 @@ import configparser
 from pymagnitude import *
 import argparse
 import subprocess
+import time
 
 def build_dataframe(dict_fn, config, filter_mode = True):
     img_paths = []
@@ -79,6 +80,7 @@ if __name__ == '__main__':
     parser.add_argument("--dict", type=str, default=None, help='image dictionary')
     parser.add_argument("--workers", type=int, default=5, help="number of processes to do work in the distributed cluster")
     parser.add_argument("--pid", type=int, default=None, help="set to true when just extracting features" )
+
     params = parser.parse_args()
     # check params 
     assert os.path.isfile(params.config)
@@ -88,6 +90,7 @@ if __name__ == '__main__':
     dict_fn = params.dict
     assert os.path.isdir(paths['mmid_dir'] + "/" + dict_fn)
     assert os.path.isfile(paths['word_magnitude'])
+    assert os.path.isfile('train_df.csv')
     if params.pid: 
         df_split = pd.read_csv('train_df.csv', sep='\t', index_col=[0])
         df_split = np.array_split(df_split, params.workers)[params.pid].reset_index().drop(columns=['index'])
@@ -99,15 +102,23 @@ if __name__ == '__main__':
                 f.write(word + "\t")
                 np.savetxt(f, arr.reshape(1,len(arr)), delimiter=' ')
         exit(0)
+    
     # TODO: if everythings works then maybe don't save the file or delete
     # #build_dataframe(dict_fn, paths) 
-    for process_id in range(params.workers): 
-        cmd = ("qsub qrun.sh " + str(process_id) + " "  + str(params.workers) + " " + params.config + " " + params.dict).split()
-        try: 
-            subprocess.check_output(cmd)        
-        except: 
-            raise Exception("There was an error while running qsub to extract features")
-    print("Finished creating embeddings")
+    else: 
+        # TODO: if everythings works then maybe don't save the file or delete
+        # #build_dataframe(dict_fn, paths) 
+        for process_id in range(params.workers): 
+            cmd = ("qrun.sh " + str(process_id) + " "  + str(params.workers) + " " + params.config + " " + params.dict).split()
+            try: 
+                subprocess.check_output(cmd)        
+            except: 
+                raise Exception("There was an error while running qsub to extract features")
+            # TODO: sleeping to ensure load get to different machines, is there better way? 
+            time.sleep(30) 
+        print("Finished creating embeddings")
     ##TODO Evaluate Image embeddings
     
+
+
 
