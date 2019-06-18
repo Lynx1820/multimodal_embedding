@@ -102,7 +102,7 @@ if __name__ == '__main__':
     # TODO: if everythings works then maybe don't save the file or delete
     # #build_dataframe(dict_fn, paths) 
     for process_id in range(params.workers): 
-        cmd = ("qrun.sh " + str(process_id) + " "  + str(params.workers) + " " + params.config + " " + params.dict).split()
+        cmd = ("qsub qrun.sh " + str(process_id) + " "  + str(params.workers) + " " + params.config + " " + params.dict).split()
         try: 
             subprocess.check_output(cmd)        
         except: 

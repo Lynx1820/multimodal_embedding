@@ -36,4 +36,4 @@ cd /nlp/users/dkeren/multimodal_embedding
 # what environment variables are available to this job script, e.g. $JOB_ID
 /usr/bin/env
 
-python image_feature_extraction.py $1
+python image_feature_extraction.py --pid $1 --workers $2 --config $3 --dict $4
