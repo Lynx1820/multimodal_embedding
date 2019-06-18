@@ -31,8 +31,8 @@ def build_dataframe(dict_fn, config, filter_mode = True):
             if filter_mode and english_translation not in word_magnitude: continue
             ends = ["01","02","03","04","05","06","07","08","09","10"]
             for img_num in ends:
-                path =  paths['mmid_dir'] + "/" + dict_fn + "/" + str(index) + "/" + img_num + ".jpg"
-                exists = os.path.isfile(path)
+                path =   dict_fn + "/" + str(index) + "/" + img_num + ".jpg"
+                exists = os.path.isfile(paths['mmid_dir'] + "/" + path)
                 # check to see whether the path exist
                 if not exists: 
                     continue
@@ -61,7 +61,7 @@ def extract_features(train_data):
     bs = 64 #batch size
 
     # default transformations applied below 
-    my_data = ImageDataBunch.from_df(config['code_dir'], train_data, valid_pct = 0, ds_tfms=get_transforms(), size=224, bs=bs, folder="/nlp").normalize(imagenet_stats)
+    my_data = ImageDataBunch.from_df(paths['code_dir'], train_data, valid_pct = 0, ds_tfms=get_transforms(), size=224, bs=bs, folder=paths['mmid_dir']).normalize(imagenet_stats)
     learn = cnn_learner(my_data, models.resnet50, metrics=error_rate)
 
     #This changes the forwards layers of the model 
@@ -90,8 +90,8 @@ if __name__ == '__main__':
     dict_fn = params.dict
     assert os.path.isdir(paths['mmid_dir'] + "/" + dict_fn)
     assert os.path.isfile(paths['word_magnitude'])
-    assert os.path.isfile('train_df.csv')
-    if params.pid: 
+#    assert os.path.isfile('train_df.csv')
+    if params.pid != None: 
         df_split = pd.read_csv('train_df.csv', sep='\t', index_col=[0])
         df_split = np.array_split(df_split, params.workers)[params.pid].reset_index().drop(columns=['index'])
         features = extract_features(df_split)
@@ -104,18 +104,19 @@ if __name__ == '__main__':
         exit(0)
     
     # TODO: if everythings works then maybe don't save the file or delete
-    # #build_dataframe(dict_fn, paths) 
-    else: 
+    else:
+        build_dataframe(dict_fn, paths) 
         # TODO: if everythings works then maybe don't save the file or delete
         # #build_dataframe(dict_fn, paths) 
         for process_id in range(params.workers): 
-            cmd = ("qrun.sh " + str(process_id) + " "  + str(params.workers) + " " + params.config + " " + params.dict).split()
-            try: 
+            cmd = ("qsub qrun.sh " + str(process_id) + " "  + str(params.workers) + " " + params.config + " " + params.dict).split()
+            try:
+                print("running " + str(process_id))
                 subprocess.check_output(cmd)        
             except: 
                 raise Exception("There was an error while running qsub to extract features")
             # TODO: sleeping to ensure load get to different machines, is there better way? 
-            time.sleep(30) 
+            time.sleep(5) 
         print("Finished creating embeddings")
     ##TODO Evaluate Image embeddings
     
