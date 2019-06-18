@@ -12,12 +12,11 @@ import pickle
 import configparser
 
 ## Returned the word of present in each of the benchmarks
-def get_eval_set_list(paths):
+def get_eval_set_dict(paths):
     """
     Wordsim-sim, wordsim-rel, simlex, MEN, SemSim, VisSim
     """
-    simlex = pd.read_csv(paths['metrics_dir'] + "/SimLex-999/SimLex-999.txt", sep="\t", header=0)
-    simlex = simlex[['word1', 'word2', 'SimLex999']].values
+    simlex = pd.read_csv(paths['metrics_dir'] + "/SimLex-999/SimLex-999.txt", sep="\t", header=0)[['word1', 'word2', 'SimLex999']].values
 
     wordsim_sim = pd.read_csv(paths['metrics_dir'] + '/wordsim353_sim_rel/wordsim_similarity_goldstandard.txt', sep='\t', header=None).values
     
@@ -30,7 +29,7 @@ def get_eval_set_list(paths):
     
     men = pd.read_csv(paths['metrics_dir'] + '/MEN/MEN_dataset_natural_form_full', sep= " ", header=None).values
     
-    eval_set_list = [wordsim_sim, wordsim_rel, simlex, men, sem, sim]
+    eval_set_list = {'word_sim' : wordsim_sim, 'word_rel' : wordsim_rel, 'simlex' : simlex, 'men': men, 'sem' : sem, 'sim' : sim}
     return eval_set_list
 
 def split_eval(eval_set_list):

@@ -10,7 +10,10 @@ import torchvision.models as models
 import torchvision.transforms as transforms
 from torch.autograd import Variable
 from PIL import Image
+from process_eval_set import * 
+from evaluation import compute_pair_sim
 from torch.utils.data import Dataset, DataLoader
+from scipy import stats
 import configparser
 from pymagnitude import *
 import argparse
@@ -113,7 +116,7 @@ if __name__ == '__main__':
         df_split = np.array_split(df_split, params.workers)[params.pid].reset_index().drop(columns=['index'])
         features = extract_features(df_split)
         translations = df_split['trans']
-        filename = paths['data_dir'] + "img_embeddings_resnet50-" + str(params.pid) + ".txt"
+        filename = paths['data_dir'] + "/img_embeddings_resnet50-" + str(params.pid) + ".txt"
         with open(filename, 'a') as f:
             for word, arr in zip(translations,features):
                 f.write(word + "\t")
@@ -121,10 +124,39 @@ if __name__ == '__main__':
         exit(0)
     elif params.mode == 'eval': 
         df_split = pd.read_csv('train_df.csv', sep='\t', index_col=[0])
+        files = []
+        for pid in range(params.workers): 
+            files.append(paths['data_dir'] + "/img_embeddings_resnet50-" + str(pid) + ".txt")
+        fn = paths['data_dir'] + '/full_img_embeddings_resnet50.txt'
+        magnitude_fn = paths['data_dir'] + '/full_img_embeddings_resnet50.magnitude'
+        full_file = open(fn, 'w')
+        words = set()
+        for filename in files: 
+            with open(filename, 'r') as file: 
+                for line in file.read():
+                    words.add(line.split('\t')[0])
+                    full_file.write(line)
+        cmd = ("python -m pymagnitude.converter -i %s -o %s" % (full_file, magnitude_fn)).split()
+        try: 
+            print("running: " + str(cmd))
+            subprocess.check_output(cmd)       
+        except: 
+            raise Exception("There was an error running" + str(cmd))
+        eval_set_dict = get_eval_set_dict(paths)
+        embeddings = Magnitude(magnitude_fn)
+        words_sim = []
+        for eval_name, eval_set in eval_set_dict.items(): 
+            for i in range(eval_set.shape[0]):
+                word1 = eval_set[i][0]
+                word2 = eval_set[i][1]
+                if word1 in embeddings and word2 in embeddings: 
+                    words_sim.append(compute_pair_sim(embeddings.query(word1), embeddings.query(word2)))  
+            cor, pval = stats.spearmanr(words_sim, eval_set[:,2])
+            print("Correlation for {}: {:.3f}, P-value: {:.3f}".format(eval_name, cor, pval))
+
     else: 
         print("options are: eval, build, partition")
         exit(0)
-        
         
     ##TODO Evaluate Image embeddings
     
