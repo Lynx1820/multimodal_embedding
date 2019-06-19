@@ -84,7 +84,7 @@ if __name__ == '__main__':
     parser.add_argument("--dict", type=str, nargs='+', default=None, help='image dictionary')
     parser.add_argument("--workers", type=int, default=5, help="number of processes to do work in the distributed cluster")
     parser.add_argument("--pid", type=int, default=None, help="set to true when just extracting features" )
-    parser.add_argument("--mode",choices=['build', 'eval', 'partition'], help="build: to build the df / create emb, eval: evaluate embeddings")
+    parser.add_argument("--mode",choices=['build', 'eval', 'partition', 'merge'], help="build: to build the df / create emb, eval: evaluate embeddings")
 
     params = parser.parse_args()
     # check params 
@@ -97,14 +97,12 @@ if __name__ == '__main__':
     ## TODO: assert for all partials workers
     assert os.path.isfile(paths['word_magnitude'])
     assert params.mode == 'build' or params.mode == 'eval' or params.mode == 'partition'
-    #assert (if params.mode == 'partition': params.pid != None)
 #    assert os.path.isfile('train_df.csv')
     # TODO: suppprt more dictionaries
     if params.mode == 'build': 
-        #build_dataframe(dict_fn, paths) 
         # TODO: if everythings works then maybe don't save the file or delete
         for dict_fn in params.dict: 
-            #build_dataframe(dict_fn, paths) 
+            build_dataframe(dict_fn, paths) 
             for process_id in range(params.workers): 
                 cmd = ("qsub qrun.sh " + str(process_id) + " "  + str(params.workers) + " " + params.config + " " + dict_fn).split()
                 try:
@@ -127,7 +125,7 @@ if __name__ == '__main__':
                 np.savetxt(f, arr.reshape(1,len(arr)), delimiter=' ')
         exit(0)
     # TODO: Handle the different 
-    elif params.mode == 'eval': 
+    elif params.mode == 'merge': 
         conc_files = {}
         for dict_fn in params.dict:
             files = [] 
@@ -158,7 +156,7 @@ if __name__ == '__main__':
             subprocess.check_output(cmd)       
         except: 
             raise Exception("There was an error running" + str(cmd))
-
+    elif params.mode == 'eval': 
         eval_set_dict = get_eval_set_dict(paths)
         embeddings = Magnitude(magnitude_fn)
         for eval_name, eval_set in eval_set_dict.items():
@@ -180,7 +178,7 @@ if __name__ == '__main__':
             print("Correlation for {}: {:.3f}, P-value: {:.3f}".format(eval_name, cor, pval))
 
     else:  
-        print("options are: eval, build, partition")
+        print("options are: eval, build, partition, merge")
         exit(0)
         
     ##TODO Evaluate Image embeddings
