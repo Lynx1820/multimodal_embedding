@@ -45,7 +45,7 @@ def build_dataframe(dict_fn, config, filter_mode = True):
 
     #dataframe with paths and translations
     df = pd.DataFrame({'paths': img_paths, 'trans' : trans}).dropna()
-    df.to_csv(params.dict + "-train_df.csv", sep='\t')
+    df.to_csv(dict_fn + "-train_df.csv", sep='\t')
 
 class SaveFeatures():
     features = None
@@ -69,7 +69,7 @@ def extract_features(train_data):
     learn = cnn_learner(my_data, models.resnet50, metrics=error_rate)
 
     #This changes the forwards layers of the model 
-    learn.fit_one_cycle(2)
+    learn.fit_one_cycle(5)
 
     sf = SaveFeatures(learn.model[1][5]) 
 
@@ -81,10 +81,10 @@ def extract_features(train_data):
 if __name__ == '__main__': 
     parser = argparse.ArgumentParser(description='Image Feature Extraction')
     parser.add_argument("--config", type=str, default=None, help= 'config file to specify paths')
-    parser.add_argument("--dict", action='append', default=None, help='image dictionary')
+    parser.add_argument("--dict", type=str, nargs='+', default=None, help='image dictionary')
     parser.add_argument("--workers", type=int, default=5, help="number of processes to do work in the distributed cluster")
     parser.add_argument("--pid", type=int, default=None, help="set to true when just extracting features" )
-    parser.add_argument("--mode",choices=['build', 'eval', ''], help="build: to build the df / create emb, eval: evaluate embeddings")
+    parser.add_argument("--mode",choices=['build', 'eval', 'partition'], help="build: to build the df / create emb, eval: evaluate embeddings")
 
     params = parser.parse_args()
     # check params 
@@ -92,8 +92,9 @@ if __name__ == '__main__':
     config = configparser.ConfigParser()
     config.read(params.config)
     paths = config['PATHS']
-    dict_fn = params.dict
-    assert os.path.isdir(paths['mmid_dir'] + "/" + dict_fn)
+    for dict_fn in params.dict:
+        assert os.path.isdir(paths['mmid_dir'] + "/" + dict_fn)
+    ## TODO: assert for all partials workers
     assert os.path.isfile(paths['word_magnitude'])
     assert params.mode == 'build' or params.mode == 'eval' or params.mode == 'partition'
     #assert (if params.mode == 'partition': params.pid != None)
@@ -102,23 +103,24 @@ if __name__ == '__main__':
     if params.mode == 'build': 
         #build_dataframe(dict_fn, paths) 
         # TODO: if everythings works then maybe don't save the file or delete
-        build_dataframe(dict_fn, paths) 
-        for process_id in range(params.workers): 
-            cmd = ("qsub qrun.sh " + str(process_id) + " "  + str(params.workers) + " " + params.config + " " + params.dict).split()
-            try:
-                print("running " + str(process_id))
-                subprocess.check_output(cmd)        
-            except: 
-                raise Exception("There was an error while running qsub to extract features")
-            # TODO: sleeping to ensure load get to different machines, is there better way? 
-            time.sleep(10) 
+        for dict_fn in params.dict: 
+            #build_dataframe(dict_fn, paths) 
+            for process_id in range(params.workers): 
+                cmd = ("qsub qrun.sh " + str(process_id) + " "  + str(params.workers) + " " + params.config + " " + dict_fn).split()
+                try:
+                    print("running " + str(process_id))
+                    subprocess.check_output(cmd)        
+                except: 
+                    raise Exception("There was an error while running qsub to extract features")
+                # TODO: sleeping to ensure load get to different machines, is there better way? 
+                time.sleep(10) 
         print("Finished creating embeddings")
     elif params.mode == 'partition': 
-        df_split = pd.read_csv(params.dict + '-train_df.csv', sep='\t', index_col=[0])
+        df_split = pd.read_csv(params.dict[0] + '-train_df.csv', sep='\t', index_col=[0])
         df_split = np.array_split(df_split, params.workers)[params.pid].reset_index().drop(columns=['index'])
         features = extract_features(df_split)
         translations = df_split['trans']
-        filename = paths['data_dir'] + "/img_embeddings_resnet50-" + params.dict + "-" + str(params.pid) + ".txt"
+        filename = paths['data_dir'] + "/img_embeddings_resnet50-" + params.dict[0] + "-" + str(params.pid) + ".txt"
         with open(filename, 'a') as f:
             for word, arr in zip(translations,features):
                 f.write(word + "\t")
@@ -132,11 +134,10 @@ if __name__ == '__main__':
             tmp_file = paths['data_dir'] + "/full_img_embeddings_resnet50-" + dict_fn + ".txt"
             for pid in range(params.workers):
                 curr_file = paths['data_dir'] + "/img_embeddings_resnet50-" + dict_fn + "-" + str(pid) + ".txt"
-                assert os.path.isfile(curr_file)
                 files.append(curr_file)
             conc_files[tmp_file] = files
         fn = paths['data_dir'] + "/full_img_embeddings_resnet50.txt"
-        magnitude_fn = paths['data_dir'] + "/full_img_embeddings_"+ params.dict +".magnitude"
+        magnitude_fn = paths['data_dir'] + "/full_img_embeddings.magnitude"
         full_file = open(fn, 'w')
         words = set()
         for temp, partial_files in conc_files.items():
@@ -157,24 +158,25 @@ if __name__ == '__main__':
             subprocess.check_output(cmd)       
         except: 
             raise Exception("There was an error running" + str(cmd))
+
         eval_set_dict = get_eval_set_dict(paths)
         embeddings = Magnitude(magnitude_fn)
         for eval_name, eval_set in eval_set_dict.items():
             words_sim = []
+            human_ratings = []
             for i in range(eval_set.shape[0]):
                 word1 = eval_set[i][0]
                 word2 = eval_set[i][1]
-                if word1 in embeddings and word2 in embeddings: 
-                    words_sim.append(compute_pair_sim(embeddings.query(word1), embeddings.query(word2)))
-                if word1 in embeddings:
-                    print(word1)
-                if word2 in embeddings:
-                    print(word2)
-            print("word sim")
+                rating = eval_set[i][2]
+                if word1 in embeddings and word2 in embeddings:
+                    cos_sim = compute_pair_sim(embeddings.query(word1), embeddings.query(word2))
+                    words_sim.append(cos_sim)
+                    human_ratings.append(rating)
+                    print("words: " + word1 + " " +word2 + " " + str(rating) + " " + str(cos_sim))
             print(words_sim)
             if len(words_sim) == 0:
                 continue
-            cor, pval = stats.spearmanr(words_sim, eval_set[:,2])
+            cor, pval = stats.spearmanr(words_sim, human_ratings)
             print("Correlation for {}: {:.3f}, P-value: {:.3f}".format(eval_name, cor, pval))
 
     else:  
