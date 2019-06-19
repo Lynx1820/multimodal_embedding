@@ -96,7 +96,6 @@ if __name__ == '__main__':
         assert os.path.isdir(paths['mmid_dir'] + "/" + dict_fn)
     ## TODO: assert for all partials workers
     assert os.path.isfile(paths['word_magnitude'])
-    assert params.mode == 'build' or params.mode == 'eval' or params.mode == 'partition'
 #    assert os.path.isfile('train_df.csv')
     # TODO: suppprt more dictionaries
     if params.mode == 'build': 
@@ -156,7 +155,8 @@ if __name__ == '__main__':
             subprocess.check_output(cmd)       
         except: 
             raise Exception("There was an error running" + str(cmd))
-    elif params.mode == 'eval': 
+    elif params.mode == 'eval':
+        magnitude_fn = paths['data_dir'] + "/full_img_embeddings.magnitude"
         eval_set_dict = get_eval_set_dict(paths)
         embeddings = Magnitude(magnitude_fn)
         for eval_name, eval_set in eval_set_dict.items():
