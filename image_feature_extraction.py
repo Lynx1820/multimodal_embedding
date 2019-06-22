@@ -62,18 +62,19 @@ class SaveFeatures():
         self.hook.remove()
 
 def extract_features(train_data): 
-    bs = 64 #batch size
+    bs = params.bs #batch size
 
     # default transformations applied below 
-    my_data = ImageDataBunch.from_df(paths['code_dir'], train_data, valid_pct = 0, ds_tfms=get_transforms(), size=224, bs=bs, folder=paths['mmid_dir']).normalize(imagenet_stats)
+    my_data = ImageDataBunch.from_df(paths['code_dir'], train_data, ds_tfms=get_transforms(), size=224, bs=bs, folder=paths['mmid_dir']).normalize(imagenet_stats)
     learn = cnn_learner(my_data, models.resnet50, metrics=error_rate)
 
     #This changes the forwards layers of the model 
-    learn.fit_one_cycle(5)
+    learn.fit_one_cycle(params.train_epochs)
 
     sf = SaveFeatures(learn.model[1][5]) 
 
     _= learn.get_preds(my_data.train_ds)
+    _= learn.get_preds(DatasetType.Valid)
 
     return sf.features
 
@@ -85,7 +86,8 @@ if __name__ == '__main__':
     parser.add_argument("--workers", type=int, default=5, help="number of processes to do work in the distributed cluster")
     parser.add_argument("--pid", type=int, default=None, help="set to true when just extracting features" )
     parser.add_argument("--mode",choices=['build', 'eval', 'partition', 'merge'], help="build: to build the df / create emb, eval: evaluate embeddings")
-
+    parser.add_argument("--train_epochs", type=int, default=10, help="number of epochs to train before extracting features") 
+    parser.add_argument("--bs", type=int, default=68, help="batch size for training") 
     params = parser.parse_args()
     # check params 
     assert os.path.isfile(params.config)
