@@ -87,8 +87,8 @@ if __name__ == '__main__':
     parser.add_argument("--workers", type=int, default=5, help="number of processes to do work in the distributed cluster")
     parser.add_argument("--pid", type=int, default=None, help="set to true when just extracting features" )
     parser.add_argument("--mode",choices=['build', 'eval', 'partition', 'merge'], help="build: to build the df / create emb, eval: evaluate embeddings")
-    parser.add_argument("--train_epochs", type=int, default=10, help="number of epochs to train before extracting features") 
-    parser.add_argument("--bs", type=int, default=68, help="batch size for training") 
+    parser.add_argument("--train_epochs", type=int, default=8, help="number of epochs to train before extracting features") 
+    parser.add_argument("--bs", type=int, default=64, help="batch size for training") 
     params = parser.parse_args()
     # check params 
     assert os.path.isfile(params.config)
@@ -146,7 +146,7 @@ if __name__ == '__main__':
                 with open(filename, 'r') as file: 
                     for line in file.read():
                         word, emb = line.split('\t')[0]
-                        if words[word] == 0 
+                        if words[word] == 0: 
                             full_dict_file.write(line)
                             full_file.write(line)
                             words[word] += 1
