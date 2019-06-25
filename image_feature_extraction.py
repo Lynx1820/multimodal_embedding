@@ -76,8 +76,8 @@ def extract_features(train_data):
 
     _= learn.get_preds(my_data.train_ds)
     _= learn.get_preds(DatasetType.Valid)
-
-    return sf.features
+    trans = [str(x) for x in (list(my_data.train_ds.y)+list(my_data.valid_ds.y))]
+    return trans, sf.features
 
 
 if __name__ == '__main__': 
@@ -104,11 +104,12 @@ if __name__ == '__main__':
     if params.mode == 'build': 
         # TODO: if everythings works then maybe don't save the file or delete
         for dict_fn in params.dict: 
-            build_dataframe(dict_fn, paths) 
+            #build_dataframe(dict_fn, paths)
+            print("processing dict: " + str(dict_fn))
             for process_id in range(params.workers): 
                 cmd = ("qsub qrun.sh " + str(process_id) + " "  + str(params.workers) + " " + params.config + " " + dict_fn).split()
                 try:
-                    print("running " + str(process_id))
+                    print("running " + str(cmd))
                     subprocess.check_output(cmd)        
                 except: 
                     raise Exception("There was an error while running qsub to extract features")
@@ -118,8 +119,7 @@ if __name__ == '__main__':
     elif params.mode == 'partition': 
         df_split = pd.read_csv(params.dict[0] + '-train_df.csv', sep='\t', index_col=[0])
         df_split = np.array_split(df_split, params.workers)[params.pid].reset_index().drop(columns=['index'])
-        features = extract_features(df_split)
-        translations = df_split['trans']
+        translations, features = extract_features(df_split)
         filename = paths['data_dir'] + "/img_embeddings_resnet50-" + params.dict[0] + "-" + str(params.pid) + ".txt"
         with open(filename, 'a') as f:
             for word, arr in zip(translations,features):
@@ -142,16 +142,17 @@ if __name__ == '__main__':
         words = Counter()
         for temp, partial_files in conc_files.items():
             full_dict_file = open(temp, 'w')
-            for filename in partial_files: 
+            for filename in partial_files:
+                print(filename)
                 with open(filename, 'r') as file: 
-                    for line in file.read():
-                        word, emb = line.split('\t')[0]
+                    for line in file:
+                        word, emb = line.split('\t')
                         if words[word] == 0: 
                             full_dict_file.write(line)
                             full_file.write(line)
                             words[word] += 1
                         else: 
-                            new_line = word + "_" + str(word[word]) + '\t' + emb
+                            new_line = word + "_" + str(words[word]) + '\t' + emb
                             full_dict_file.write(new_line)
                             full_file.write(new_line)
                             words[word] += 1
@@ -179,7 +180,7 @@ if __name__ == '__main__':
                 rating = eval_set[i][2]
                 if word1 in embeddings and word2 in embeddings:
                     emb1 = [embeddings.query(word1) ]
-                    emb2 = [emmbeddings.query(word2) ]
+                    emb2 = [embeddings.query(word2) ]
                     for label in range(1,10):
                         tmp1 = word1 + "_" + str(label) 
                         tmp2 = word2 + "_" + str(label)
@@ -187,7 +188,7 @@ if __name__ == '__main__':
                             emb1.append(embeddings.query(tmp1))
                         if tmp2 in embeddings: 
                             emb2.append(embeddings.query(tmp2))
-                    cos_sim = sum(np.amax(cosine_similarity(np.array(emb1), np,array(emb2)), axis=1))/len(emb1)
+                    cos_sim = sum(np.amax(cosine_similarity(np.array(emb1), np.array(emb2)), axis=1))/len(emb1)
                     words_sim.append(cos_sim)
                     human_ratings.append(rating)
                     print("words: " + word1 + " " +word2 + " " + str(rating) + " " + str(cos_sim))
