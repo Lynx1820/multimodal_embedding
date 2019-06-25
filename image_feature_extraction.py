@@ -2,13 +2,14 @@ from fastai.vision import *
 from fastai.metrics import error_rate
 import pandas as pd
 from tqdm import tqdm
-from collections import defaultdict
+from collections import Counter
 import torch
 from torch.utils import data
 import torch.nn as nn
 import torchvision.models as models
 import torchvision.transforms as transforms
 from torch.autograd import Variable
+from sklearn.metrics.pairwise import cosine_similarity
 from PIL import Image
 from process_eval_set import get_eval_set_dict 
 from evaluation import compute_pair_sim
@@ -138,15 +139,23 @@ if __name__ == '__main__':
         fn = paths['data_dir'] + "/full_img_embeddings_resnet50.txt"
         magnitude_fn = paths['data_dir'] + "/full_img_embeddings.magnitude"
         full_file = open(fn, 'w')
-        words = set()
+        words = Counter()
         for temp, partial_files in conc_files.items():
             full_dict_file = open(temp, 'w')
             for filename in partial_files: 
                 with open(filename, 'r') as file: 
                     for line in file.read():
-                        words.add(line.split('\t')[0])
-                        full_dict_file.write(line)
-                        full_file.write(line)
+                        word, emb = line.split('\t')[0]
+                        if words[word] == 0 
+                            full_dict_file.write(line)
+                            full_file.write(line)
+                            words[word] += 1
+                        else: 
+                            new_line = word + "_" + str(word[word]) + '\t' + emb
+                            full_dict_file.write(new_line)
+                            full_file.write(new_line)
+                            words[word] += 1
+                        
             full_dict_file.close()
         full_file.close()
         print("done writing new dictionaries")
@@ -169,7 +178,16 @@ if __name__ == '__main__':
                 word2 = eval_set[i][1]
                 rating = eval_set[i][2]
                 if word1 in embeddings and word2 in embeddings:
-                    cos_sim = compute_pair_sim(embeddings.query(word1), embeddings.query(word2))
+                    emb1 = [embeddings.query(word1) ]
+                    emb2 = [emmbeddings.query(word2) ]
+                    for label in range(1,10):
+                        tmp1 = word1 + "_" + str(label) 
+                        tmp2 = word2 + "_" + str(label)
+                        if tmp1 in embeddings: 
+                            emb1.append(embeddings.query(tmp1))
+                        if tmp2 in embeddings: 
+                            emb2.append(embeddings.query(tmp2))
+                    cos_sim = sum(np.amax(cosine_similarity(np.array(emb1), np,array(emb2)), axis=1))/len(emb1)
                     words_sim.append(cos_sim)
                     human_ratings.append(rating)
                     print("words: " + word1 + " " +word2 + " " + str(rating) + " " + str(cos_sim))
