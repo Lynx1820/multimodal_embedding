@@ -103,29 +103,36 @@ if __name__ == '__main__':
     # TODO: suppprt more dictionaries
     if params.mode == 'build': 
         # TODO: if everythings works then maybe don't save the file or delete
+        df_list = []
         for dict_fn in params.dict: 
             #build_dataframe(dict_fn, paths)
-            print("processing dict: " + str(dict_fn))
-            for process_id in range(params.workers): 
-                cmd = ("qsub qrun.sh " + str(process_id) + " "  + str(params.workers) + " " + params.config + " " + dict_fn).split()
-                try:
-                    print("running " + str(cmd))
-                    subprocess.check_output(cmd)        
-                except: 
-                    raise Exception("There was an error while running qsub to extract features")
-                # TODO: sleeping to ensure load get to different machines, is there better way? 
-                time.sleep(10) 
-        print("Finished creating embeddings")
-    elif params.mode == 'partition': 
-        df_split = pd.read_csv(params.dict[0] + '-train_df.csv', sep='\t', index_col=[0])
-        df_split = np.array_split(df_split, params.workers)[params.pid].reset_index().drop(columns=['index'])
-        translations, features = extract_features(df_split)
+            df_list.append(pd.read_csv(dict_fn + '-train_df.csv', sep='\t', index_col=[0]))
+        all_dfs = pd.concat(df_list).reset_index().drop(columns=['index'])
+        all_dfs.to_csv("all-train_df.csv", sep='\t')
+        translations, features = extract_features(all_dfs)
         filename = paths['data_dir'] + "/img_embeddings_resnet50-" + params.dict[0] + "-" + str(params.pid) + ".txt"
         with open(filename, 'a') as f:
             for word, arr in zip(translations,features):
                 f.write(word + "\t")
                 np.savetxt(f, arr.reshape(1,len(arr)), delimiter=' ')
         exit(0)
+        '''
+        print("processing dict: " + str(dict_fn))
+        for process_id in range(params.workers): 
+            cmd = ("qsub qrun.sh " + str(process_id) + " "  + str(params.workers) + " " + params.config + " " + dict_fn).split()
+            try:
+                print("running " + str(cmd))
+                subprocess.check_output(cmd)        
+            except: 
+                raise Exception("There was an error while running qsub to extract features")
+            # TODO: sleeping to ensure load get to different machines, is there better way? 
+            time.sleep(10) 
+        print("Finished creating embeddings")
+        '''
+    #elif params.mode == 'partition': 
+        #df_split = pd.read_csv(params.dict[0] + '-train_df.csv', sep='\t', index_col=[0])
+        #df_split = np.array_split(df_split, params.workers)[params.pid].reset_index().drop(columns=['index'])
+
     # TODO: Handle the different 
     elif params.mode == 'merge': 
         conc_files = {}
