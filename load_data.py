@@ -160,6 +160,10 @@ config.read(sys.argv[2])
 paths = config['PATHS']
 
 if sys.argv[1] == 'train': 
+    print("Creating Training Data")
+    print("Reading embeddings from: " + paths['image_embedding'])
+    print("Saving to data to: " + paths['x_train'] + " and " + paths['y_train'])
+    print("Saving processed words to: " + paths['code_dir'] + "/word_processed.txt ")
     create_train_set()
 else: 
     if len(sys.argv) > 2 and sys.argv[3] == 'no_mean':
