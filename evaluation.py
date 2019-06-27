@@ -4,7 +4,7 @@ Purpose:
 """
 from process_eval_set import get_eval_set_dict
 from argparse import ArgumentParser
-
+from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -61,9 +61,18 @@ def compute_sim_magnitude(eval_set, word_dict):
     """ 
     word_sim = []
     for i in range(eval_set.shape[0]):
-        embedding1 = word_dict.query(eval_set[i][0])
-        embedding2 = word_dict.query(eval_set[i][1])
-        pair_sim = compute_pair_sim(embedding1, embedding2)
+        word1 = eval_set[i][0]
+        word2 = eval_set[i][1]
+        emb1 = [word_dict.query(word1)]
+        emb2 = [word_dict.query(word2)]
+        for label in range(1,10):
+            tmp1 = word1 + "_" + str(label) 
+            tmp2 = word2 + "_" + str(label)
+            if tmp1 in word_dict: 
+                emb1.append(word_dict.query(tmp1))
+            if tmp2 in word_dict: 
+                emb2.append(word_dict.query(tmp2))
+        pair_sim = sum(np.amax(cosine_similarity(np.array(emb1), np.array(emb2)), axis=1))/len(emb1)
         word_sim.append(pair_sim)
     word_sim = np.asarray(word_sim)
     
