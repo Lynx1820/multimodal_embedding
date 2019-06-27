@@ -88,8 +88,9 @@ def save_prediction(word_list, list_type, pred_embedding, args):
         path = args.s
     else:
         path = args.l                            
-    
-    with open(path+"_"+list_type+".p", 'wb') as fp:
+    filename = path+"_"+list_type+".p"
+    print("Saving prediction to " filename)
+    with open(filename, 'wb') as fp:
         pickle.dump(word_dict, fp, protocol=pickle.HIGHEST_PROTOCOL)
     
     return word_dict
@@ -126,7 +127,7 @@ def main():
     config = configparser.ConfigParser()
     config.read(args.c)
     paths = config['PATHS']
-    #x_train = pd.read_csv("/data1/minh/multimodal/x_train.txt", sep=" ", header=None)
+    print("Reading training data from: " + paths['x_train'] + " " + paths['y_train'])
     y_train = pd.read_csv(paths['y_train'], sep=" ", header=None)
     x_train = pd.read_csv(paths['x_train'], sep=" ", header=None)
     #y_train = pd.read_csv("/data1/minh/multimodal/y_train.txt", sep=" ", header=None)
@@ -142,6 +143,7 @@ def main():
         model_path = args.l
         model.load_model() 
     
+    print("Predicting words from " + paths['eval_dir'] +'/pred_set_vis.txt' +  " and " + paths['eval_dir'] +'/pred_set_zs.txt')
     vis_pred_set = pd.read_csv(paths['eval_dir'] +'/pred_set_vis.txt', sep=' ', header=None).values
     zs_pred_set = pd.read_csv(paths['eval_dir'] +'/pred_set_zs.txt', sep=' ', header=None).values
     vis_embedding = model.predict(vis_pred_set[:, 1:])

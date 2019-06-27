@@ -125,13 +125,16 @@ def get_eval_set_missing(eval_set_list):
 
 def main():
     # load evaluation sets
-    eval_set_list = get_eval_set_dict(paths)
-    split_eval(eval_set_list)
+    print("Reading words processed from: " + paths['code_dir'] + "/words_processed.txt")
+    print("Using the word magnitude file from: " + paths['word_magnitude'])
+    print("Saving evaluation sets to " + paths['eval_dir'])
+    eval_set_dict = get_eval_set_dict(paths)
+    split_eval(eval_set_dict)
     print("Done splitting eval sets into zs and vis.")
     print("Each eval set should have a separate zs and vis in evaluation folder.")
     
-    aggregate_set('vis')
-    aggregate_set('zs')
+    aggregate_set('vis', eval_set_dict)
+    aggregate_set('zs', eval_set_dict)
     print("Done aggregate zs and vis sets")
     print("All ZS/VIS words are collected in pred_set in multimodal folder.")
 

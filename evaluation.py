@@ -118,6 +118,7 @@ def main():
     config = configparser.ConfigParser()
     config.read(args.c)
     paths = config['PATHS']
+    
     # load evaluation sets
     eval_set_dict = get_eval_set_dict(paths)
     
@@ -137,14 +138,16 @@ def main():
     # evaluate a concatenated model
     elif args.model == 'word_mode': 
         word_dict = Magnitude(paths['word_magnitude'])
+        print("Using word magnitude file from: " + paths['word_magnitude'] )
         evaluate('vis', word_dict, 'magnitude', eval_set_dict, paths)
         evaluate('zs', word_dict, 'magnitude', eval_set_dict, paths)
         evaluate_all(eval_set_dict, word_dict, 'magnitude')
     elif args.model == 'img_mode': 
-        img_dict = Magnitude(paths['img_magnitude'])
+        img_dict = Magnitude(paths['image_magnitude'])
+        print("Using image magnitude file from: " + paths['image_magnitude'] )
         evaluate('vis', img_dict, 'magnitude', paths)
         evaluate('zs', img_dict, 'magnitude', paths)
-        evaluate_all(eval_set_dict, word_dict, 'magnitude')
+        evaluate_all(eval_set_dict, img_dict, 'magnitude')
     elif args.model == 'c_linear' or args.model == 'c_neural':    
         word_dict = Magnitude(paths['word_magnitude'])
         if args.model == 'c_linear':        
