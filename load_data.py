@@ -10,6 +10,7 @@ import pandas as pd
 import os
 from pymagnitude import *
 import configparser
+from collections import Counter
 def create_image_embedding(folder_name):
     """
     create one image embedding for each word by average pooling all image feature vectors
@@ -93,25 +94,23 @@ def create_image_embedding_resnet(data_path, folder_name, no_mean = False):
                 
     print("Done average pooling, words" )
     print(len(word_to_index.keys())) 
-# 
-def create_train_set(no_mean = False):
+def create_train_set():
     """
     create the train set (x_train, y_train)
     @return x_train, y_train
     """
     words = pd.read_csv(paths['image_embedding'], sep=' ', header=None).values
     # save all words in a txt file k
-    #np.savetxt('/nlp/data/dkeren/words_uc.txt', words[:,0], fmt="%s")
     word_dict = Magnitude(paths['word_magnitude'])
-    #img_dict = Magnitude('/data1/embeddings/pymagnitude/image.magnitude')
     img_dict = Magnitude(paths['image_magnitude'])
     # TODO: skip over words with all NaNs    
     
     # create a file of processed words (no annotations of translation)
     # query for processed words' embeddings
+    wrd_counter = Counter()
     for i in range(words.shape[0]):
         phrase = words[i][0].replace('_', ' ')
-        # convert word, e.g row-writings to writings
+
         # TODO: comment out, just keep to handle old code 
         if "row" in words[i][0]:
              phrase = phrase.split('-')[1]
@@ -127,17 +126,15 @@ def create_train_set(no_mean = False):
         with open(paths['code_dir'] + '/words_processed.txt', 'a') as f:
             f.write("{}\n".format(phrase))
         word_embedding = word_dict.query(phrase) #query word embedding for image word
-        check_nan = np.isnan(word_embedding)
-        all_nan = check_nan[check_nan==True].shape[0] #number of nans
-        if all_nan == word_embedding.shape[0]: print("Nan: " + phrase)
-        img_embedding = img_dict.query(phrase)
-        check_nan = np.isnan(img_embedding)
-        all_nan = check_nan[check_nan==True].shape[0]
-        # check if a word has valid image vectors 
-        # valid: image vectors doesn't contain all NaNs
-        # check_nan = np.isnan(img_embedding)
-        # all_nan = check_nan[check_nan==True].shape[0]
-        # if all_nan == img_embedding.shape[0]:
+        # TODO: paramatize the max number of images
+
+        if wrd_counter[phrase] == 0: 
+            img_embedding = img_dict.query(phrase)
+            wrd_counter[phrase] += 1
+        else: 
+            phrase_num = phrase + "_" + str(wrd_counter[phrase])
+            img_embedding = img_dict.query(phrase_num)
+            wrd_counter[phrase] += 1
             
         # add to x_train and y_train
         with open(paths['x_train'], 'a') as f:
@@ -147,15 +144,14 @@ def create_train_set(no_mean = False):
 
 #create_image_embedding(folder_name)
 #folder with image vectors: '/data1/minh/data'
-#current folder with sample fasttext: '~/data/fasttext_sample.magnitude'
+#current folder with sample fasttent: '~/data/fasttext_sample.magnitude'
 #folder with image magnitude: '/data1/mihn/magnitude/image.magnitude'
 #folder_path = "/nlp/data/dkeren/data_chunks"
 
 folder_path = "/nlp/data/dkeren/" + sys.argv[1]
 data_path = '/nlp/data/dkeren/img_embedding_' + sys.argv[1] + "2.txt"
-# TODO: for later
-#word_magnitude_file = '/nlp/data/dkeren/crawl-300d-2M.magnitude'
-#image_magnitude_file = '/nlp/data/dkeren/img.magnitude'
+
+
 if len(sys.argv) < 2:
     print("Need config file")
     exit(1)
@@ -164,10 +160,7 @@ config.read(sys.argv[2])
 paths = config['PATHS']
 
 if sys.argv[1] == 'train': 
-    if len(sys.argv) > 2 and sys.argv[3] == 'no_mean':
-        create_train_set(True)
-    else: 
-        create_train_set()
+    create_train_set()
 else: 
     if len(sys.argv) > 2 and sys.argv[3] == 'no_mean':
         create_image_embedding_resnet(data_path, folder_path,True)

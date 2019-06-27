@@ -69,14 +69,14 @@ def compute_sim_magnitude(eval_set, word_dict):
     
     return word_sim
 
-def evaluate(eval_set_type, word_dict, dict_format, paths):
+def evaluate(eval_set_type, word_dict, dict_format, eval_set_dict, paths):
     """
     Print out evaluation results (correlation, P-value) for all sets, either of type ZS or VIS 
     @param eval_set_type: Type of eval set (ZS/VIS)
     @param word_dict: corresponding dictionary: keys: zs/vis words, values: predicted embeddings 
     """ 
     path = paths['eval_dir']
-    for i in range(6):
+    for eval_name, eval_set in eval_set_dict.items():
         eval_set = pd.read_csv(path+"/"+str(i)+'_'+eval_set_type+'.txt', sep=' ', header=None).as_matrix()
         if dict_format == 'dict':
             model_sim = compute_sim(eval_set, word_dict)
@@ -86,20 +86,20 @@ def evaluate(eval_set_type, word_dict, dict_format, paths):
         print("Correlation for {} ({}): {:.3f}, P-value: {:.3f}".format(str(i), eval_set_type, cor, pval))
     print()
 
-def evaluate_all(eval_set_list, word_dict, dict_format):
+def evaluate_all(eval_set_dict, word_dict, dict_format):
     """
     Print out evaluation results (correlation, P-value) for all sets (full set)
-    @param eval_set_list: List of eval sets (in matrix form)
+    @param eval_set_dict: List of eval sets (in matrix form)
     @param word_dict: corresponding dictionary: keys: all words, values: predicted embeddings 
     @param dict_format: format of dictionary, 'dict' (normal dictionary) or 'magnitude' (magnitude object)
     """  
     print("Evaluation List Used: wordsim_sim, wordsim_rel, simlex, men")
-    for i in range(len(eval_set_list)):
+    for eval_name, eval_set in eval_set_dict.items():
         if dict_format == 'dict':
-            model_sim = compute_sim(eval_set_list[i], word_dict)
+            model_sim = compute_sim(eval_set, word_dict)
         else:
-            model_sim = compute_sim_magnitude(eval_set_list[i], word_dict)
-        cor, pval = stats.spearmanr(model_sim, eval_set_list[i][:,2])
+            model_sim = compute_sim_magnitude(eval_set, word_dict)
+        cor, pval = stats.spearmanr(model_sim, eval_set[:,2])
         print("Correlation for {} (all): {:.3f}, P-value: {:.3f}".format(str(i), cor, pval))
     print() 
 
@@ -119,7 +119,7 @@ def main():
     config.read(args.c)
     paths = config['PATHS']
     # load evaluation sets
-    eval_set_list = get_eval_set_dict(paths)
+    eval_set_dict = get_eval_set_dict(paths)
     
     #args.m: linear, neural, c_linear, c_neural
     # evaluate a normal model (not concatenated)
@@ -131,20 +131,20 @@ def main():
             word_dict_zs = pickle.load(fp)
         with open(args.path+"_all.p", 'rb') as fp:
             word_dict_all = pickle.load(fp)
-        evaluate('vis', word_dict_vis, 'dict', paths)
-        evaluate('zs', word_dict_zs, 'dict', paths)
-        evaluate_all(eval_set_list, word_dict_all, 'dict')
+        evaluate('vis', word_dict_vis, 'dict', eval_set_dict, paths)
+        evaluate('zs', word_dict_zs, 'dict', eval_set_dict, paths)
+        evaluate_all(eval_set_dict, word_dict_all, 'dict')
     # evaluate a concatenated model
     elif args.model == 'word_mode': 
         word_dict = Magnitude(paths['word_magnitude'])
-        evaluate('vis', word_dict, 'magnitude', paths)
-        evaluate('zs', word_dict, 'magnitude', paths)
-        evaluate_all(eval_set_list, word_dict, 'magnitude')
+        evaluate('vis', word_dict, 'magnitude', eval_set_dict, paths)
+        evaluate('zs', word_dict, 'magnitude', eval_set_dict, paths)
+        evaluate_all(eval_set_dict, word_dict, 'magnitude')
     elif args.model == 'img_mode': 
         img_dict = Magnitude(paths['img_magnitude'])
         evaluate('vis', img_dict, 'magnitude', paths)
         evaluate('zs', img_dict, 'magnitude', paths)
-        evaluate_all(eval_set_list, word_dict, 'magnitude')
+        evaluate_all(eval_set_dict, word_dict, 'magnitude')
     elif args.model == 'c_linear' or args.model == 'c_neural':    
         word_dict = Magnitude(paths['word_magnitude'])
         if args.model == 'c_linear':        
@@ -157,7 +157,7 @@ def main():
 
         evaluate('vis', fused_dict, 'magnitude',paths)
         evaluate('zs', fused_dict, 'magnitude',paths)
-        evaluate_all(eval_set_list, fused_dict, 'magnitude')
+        evaluate_all(eval_set_dict, fused_dict, 'magnitude')
 
 if __name__ == '__main__':
     # convert dictionary to txt file, then convert to Magnitude format in command line 

@@ -29,29 +29,27 @@ def get_eval_set_dict(paths):
     
     men = pd.read_csv(paths['metrics_dir'] + '/MEN/MEN_dataset_natural_form_full', sep= " ", header=None).values
     
-    eval_set_list = {'word_sim' : wordsim_sim, 'word_rel' : wordsim_rel, 'simlex' : simlex, 'men': men, 'sem' : sem, 'sim' : sim}
-    return eval_set_list
+    eval_set_dict = {'word_sim' : wordsim_sim, 'word_rel' : wordsim_rel, 'simlex' : simlex, 'men': men, 'sem' : sem, 'sim' : sim}
+    return eval_set_dict
 
-def split_eval(eval_set_list):
+def split_eval(eval_set_dict):
     """
     Split each eval set into a VIS set and a ZS set based on the words processed 
     """
     
     vis_words = pd.read_csv(paths['code_dir'] + "/words_processed.txt", sep="\t",  header=None).values
-    counter = 0 # to mark eval set 
 
-    for eval_set in eval_set_list:
+    for eval_name, eval_set in eval_set_dict.items():
         for i in range(eval_set.shape[0]):
             # check if both words in the word pair have image embeddings 
             if eval_set[i][0] in vis_words and eval_set[i][1] in vis_words:
-                with open(paths['eval_dir'] + "/" + str(counter)+'_vis.txt', 'a') as f:
+                with open(paths['eval_dir'] + "/" + str(eval_name)+'_vis.txt', 'a') as f:
                     np.savetxt(f, eval_set[i].reshape(1, eval_set[i].shape[0]), fmt='%s')
             else:
-                with open(paths['eval_dir'] + "/" +  str(counter)+'_zs.txt', 'a') as f:
+                with open(paths['eval_dir'] + "/" +  str(eval_name)+'_zs.txt', 'a') as f:
                     np.savetxt(f, eval_set[i].reshape(1, eval_set[i].shape[0]), fmt='%s')
-        counter += 1
 
-def aggregate_set(eval_set_type):
+def aggregate_set(eval_set_type, eval_set_dict):
     """
     aggregate all zs words and their word embeddings into a file, for prediction 
     similiar for vis words 
@@ -61,11 +59,11 @@ def aggregate_set(eval_set_type):
     word_dict = Magnitude(paths['word_magnitude'])
     check_duplicates_dict = {}
     # open all _zs and _vis.txt files
-    for i in range(5):
+    for eval_name, _ in eval_set_dict.items():
         if eval_set_type == 'vis':
-            eval_set = pd.read_csv(path+ "/" + str(i)+'_vis.txt', sep=' ', header=None).values
+            eval_set = pd.read_csv(path+ "/" + eval_name+'_vis.txt', sep=' ', header=None).values
         elif eval_set_type == 'zs':
-            eval_set = pd.read_csv(path+ "/" + str(i) + '_zs.txt', sep= ' ', header=None).values
+            eval_set = pd.read_csv(path+ "/" + eval_name + '_zs.txt', sep= ' ', header=None).values
         
         for i in range(eval_set.shape[0]):
             # if this word has never been added to the prediction set
@@ -127,7 +125,7 @@ def get_eval_set_missing(eval_set_list):
 
 def main():
     # load evaluation sets
-    eval_set_list = get_eval_set_list(paths)
+    eval_set_list = get_eval_set_dict(paths)
     split_eval(eval_set_list)
     print("Done splitting eval sets into zs and vis.")
     print("Each eval set should have a separate zs and vis in evaluation folder.")
