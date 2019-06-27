@@ -89,7 +89,7 @@ def save_prediction(word_list, list_type, pred_embedding, args):
     else:
         path = args.l                            
     filename = path+"_"+list_type+".p"
-    print("Saving prediction to " filename)
+    print("Saving prediction to " +  filename)
     with open(filename, 'wb') as fp:
         pickle.dump(word_dict, fp, protocol=pickle.HIGHEST_PROTOCOL)
     

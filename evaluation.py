@@ -77,13 +77,13 @@ def evaluate(eval_set_type, word_dict, dict_format, eval_set_dict, paths):
     """ 
     path = paths['eval_dir']
     for eval_name, eval_set in eval_set_dict.items():
-        eval_set = pd.read_csv(path+"/"+str(i)+'_'+eval_set_type+'.txt', sep=' ', header=None).as_matrix()
+        eval_set = pd.read_csv(path+"/"+str(eval_name)+'_'+eval_set_type+'.txt', sep=' ', header=None).as_matrix()
         if dict_format == 'dict':
             model_sim = compute_sim(eval_set, word_dict)
         else:
             model_sim = compute_sim_magnitude(eval_set, word_dict)
         cor, pval = stats.spearmanr(model_sim, eval_set[:,2])
-        print("Correlation for {} ({}): {:.3f}, P-value: {:.3f}".format(str(i), eval_set_type, cor, pval))
+        print("Correlation for {} ({}): {:.3f}, P-value: {:.3f}".format(eval_name, eval_set_type, cor, pval))
     print()
 
 def evaluate_all(eval_set_dict, word_dict, dict_format):
@@ -100,7 +100,7 @@ def evaluate_all(eval_set_dict, word_dict, dict_format):
         else:
             model_sim = compute_sim_magnitude(eval_set, word_dict)
         cor, pval = stats.spearmanr(model_sim, eval_set[:,2])
-        print("Correlation for {} (all): {:.3f}, P-value: {:.3f}".format(str(i), cor, pval))
+        print("Correlation for {} (all): {:.3f}, P-value: {:.3f}".format(eval_name, cor, pval))
     print() 
 
 def parse_args():
@@ -139,14 +139,14 @@ def main():
     elif args.model == 'word_mode': 
         word_dict = Magnitude(paths['word_magnitude'])
         print("Using word magnitude file from: " + paths['word_magnitude'] )
-        evaluate('vis', word_dict, 'magnitude', eval_set_dict, paths)
-        evaluate('zs', word_dict, 'magnitude', eval_set_dict, paths)
+        evaluate('vis', word_dict, 'magnitude', eval_set_dict, eval_set_dict, paths)
+        evaluate('zs', word_dict, 'magnitude', eval_set_dict, eval_set_dict, paths)
         evaluate_all(eval_set_dict, word_dict, 'magnitude')
     elif args.model == 'img_mode': 
         img_dict = Magnitude(paths['image_magnitude'])
         print("Using image magnitude file from: " + paths['image_magnitude'] )
-        evaluate('vis', img_dict, 'magnitude', paths)
-        evaluate('zs', img_dict, 'magnitude', paths)
+        evaluate('vis', img_dict, 'magnitude', eval_set_dict, paths)
+        evaluate('zs', img_dict, 'magnitude', eval_set_dict, paths)
         evaluate_all(eval_set_dict, img_dict, 'magnitude')
     elif args.model == 'c_linear' or args.model == 'c_neural':    
         word_dict = Magnitude(paths['word_magnitude'])
@@ -158,8 +158,8 @@ def main():
         fused_dict = Magnitude(word_dict, pred_dict)
         print('Dimension of concatenated vectors: {}'.format(fused_dict.dim))
 
-        evaluate('vis', fused_dict, 'magnitude',paths)
-        evaluate('zs', fused_dict, 'magnitude',paths)
+        evaluate('vis', fused_dict, 'magnitude', eval_set_dict, paths)
+        evaluate('zs', fused_dict, 'magnitude', eval_set_dict, paths)
         evaluate_all(eval_set_dict, fused_dict, 'magnitude')
 
 if __name__ == '__main__':
