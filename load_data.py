@@ -99,15 +99,12 @@ def create_train_set():
     create the train set (x_train, y_train)
     @return x_train, y_train
     """
-    words = pd.read_csv(paths['image_embedding'], sep=' ', header=None).values
+    words = pd.read_csv(paths['image_embedding'], sep='\t', header=None).values
     # save all words in a txt file k
     word_dict = Magnitude(paths['word_magnitude'])
-    img_dict = Magnitude(paths['image_magnitude'])
     # TODO: skip over words with all NaNs    
     
     # create a file of processed words (no annotations of translation)
-    # query for processed words' embeddings
-    wrd_counter = Counter()
     for i in range(words.shape[0]):
         phrase = words[i][0].replace('_', ' ')
 
@@ -126,21 +123,14 @@ def create_train_set():
         with open(paths['code_dir'] + '/words_processed.txt', 'a') as f:
             f.write("{}\n".format(phrase))
         word_embedding = word_dict.query(phrase) #query word embedding for image word
+        img_embedding = words[i][1]
         # TODO: paramatize the max number of images
 
-        if wrd_counter[phrase] == 0: 
-            img_embedding = img_dict.query(phrase)
-            wrd_counter[phrase] += 1
-        else: 
-            phrase_num = phrase + "_" + str(wrd_counter[phrase])
-            img_embedding = img_dict.query(phrase_num)
-            wrd_counter[phrase] += 1
-            
         # add to x_train and y_train
         with open(paths['x_train'], 'a') as f:
             np.savetxt(f, word_embedding.reshape(1, word_embedding.shape[0]))
         with open(paths['y_train'], 'a') as f:
-            np.savetxt(f, img_embedding.reshape(1, img_embedding.shape[0]))
+            f.write("{}\n".format(img_embedding))
 
 #create_image_embedding(folder_name)
 #folder with image vectors: '/data1/minh/data'
