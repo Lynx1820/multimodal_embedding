@@ -70,7 +70,12 @@ def extract_features(train_data):
     learn = cnn_learner(my_data, models.resnet50, metrics=error_rate)
 
     #This changes the forwards layers of the model 
-    learn.fit_one_cycle(params.train_epochs)
+    learn.fit_one_cycle(params.train_epochs,params.lr)
+
+    #saving model 
+    modelname = paths['data_dir'] + "/" + params.model_name
+    print("Saving model to: " + modelname)
+    learn.save(modelname)
 
     sf = SaveFeatures(learn.model[1][5]) 
 
@@ -88,7 +93,10 @@ if __name__ == '__main__':
     parser.add_argument("--pid", type=int, default=None, help="set to true when just extracting features" )
     parser.add_argument("--mode",choices=['build', 'eval', 'partition', 'merge'], help="build: to build the df / create emb, eval: evaluate embeddings")
     parser.add_argument("--train_epochs", type=int, default=8, help="number of epochs to train before extracting features") 
+    parser.add_argument("--model_name", type=str, default="model_rn50", help="model name") 
+    #Model Paramaters
     parser.add_argument("--bs", type=int, default=64, help="batch size for training") 
+    parser.add_argument("--lr", type=int, default=1e-2, help="learning rate") 
     params = parser.parse_args()
     # check params 
     assert os.path.isfile(params.config)
@@ -111,35 +119,19 @@ if __name__ == '__main__':
         all_dfs.to_csv("all-train_df.csv", sep='\t')
         translations, features = extract_features(all_dfs)
         filename = paths['data_dir'] + "/img_embeddings_resnet50-" + params.dict[0] + "-" + str(params.pid) + ".txt"
+        print("Saving features to file: " + filename)
         with open(filename, 'a') as f:
             for word, arr in zip(translations,features):
                 f.write(word + "\t")
                 np.savetxt(f, arr.reshape(1,len(arr)), delimiter=' ')
         exit(0)
-        '''
-        print("processing dict: " + str(dict_fn))
-        for process_id in range(params.workers): 
-            cmd = ("qsub qrun.sh " + str(process_id) + " "  + str(params.workers) + " " + params.config + " " + dict_fn).split()
-            try:
-                print("running " + str(cmd))
-                subprocess.check_output(cmd)        
-            except: 
-                raise Exception("There was an error while running qsub to extract features")
-            # TODO: sleeping to ensure load get to different machines, is there better way? 
-            time.sleep(10) 
-        print("Finished creating embeddings")
-        '''
-    #elif params.mode == 'partition': 
-        #df_split = pd.read_csv(params.dict[0] + '-train_df.csv', sep='\t', index_col=[0])
-        #df_split = np.array_split(df_split, params.workers)[params.pid].reset_index().drop(columns=['index'])
-
     # TODO: Handle the different 
     elif params.mode == 'merge': 
         conc_files = {}
         for dict_fn in params.dict:
             files = [] 
             tmp_file = paths['data_dir'] + "/full_img_embeddings_resnet50-" + dict_fn + ".txt"
-            for pid in range(params.workers):
+           for pid in range(params.workers):
                 curr_file = paths['data_dir'] + "/img_embeddings_resnet50-" + dict_fn + "-" + str(pid) + ".txt"
                 files.append(curr_file)
             conc_files[tmp_file] = files
@@ -208,9 +200,5 @@ if __name__ == '__main__':
     else:  
         print("options are: eval, build, partition, merge")
         exit(0)
-        
-    ##TODO Evaluate Image embeddings
-    
-
 
 
