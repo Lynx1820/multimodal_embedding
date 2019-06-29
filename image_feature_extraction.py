@@ -21,7 +21,7 @@ import argparse
 import subprocess
 import time
 
-def build_dataframe(dict_fn, config, filter_mode = True):
+def build_dataframe(dict_fn, paths, filter_mode = True):
     img_paths = []
     trans = []
     word_magnitude = None
@@ -88,15 +88,16 @@ def extract_features(train_data):
 if __name__ == '__main__': 
     parser = argparse.ArgumentParser(description='Image Feature Extraction')
     parser.add_argument("--config", type=str, default=None, help= 'config file to specify paths')
-    parser.add_argument("--dict", type=str, nargs='+', default=None, help='image dictionary')
-    parser.add_argument("--workers", type=int, default=5, help="number of processes to do work in the distributed cluster")
+    parser.add_argument("--dict", type=str, nargs='+', default=None, help='List of image disctionaries to train on')
+    parser.add_argument("--fea_filename", type=str, default=None, help='Features\' filename')
+    parser.add_argument("--workers", type=int, default=1, help="number of processes to do work in the distributed cluster")
     parser.add_argument("--pid", type=int, default=None, help="set to true when just extracting features" )
-    parser.add_argument("--mode",choices=['build', 'eval', 'partition', 'merge'], help="build: to build the df / create emb, eval: evaluate embeddings")
+    parser.add_argument("--mode",choices=['train', 'eval', 'partition', 'magnitude', 'build_df'], help="build_df: preprocess data and create embeddings, eval: evaluate embeddings")
     parser.add_argument("--train_epochs", type=int, default=8, help="number of epochs to train before extracting features") 
     parser.add_argument("--model_name", type=str, default="model_rn50", help="model name") 
     #Model Paramaters
     parser.add_argument("--bs", type=int, default=64, help="batch size for training") 
-    parser.add_argument("--lr", type=int, default=1e-2, help="learning rate") 
+    parser.add_argument("--lr", type=float, default=1e-2, help="learning rate") 
     params = parser.parse_args()
     # check params 
     assert os.path.isfile(params.config)
@@ -108,55 +109,41 @@ if __name__ == '__main__':
     ## TODO: assert for all partials workers
     assert os.path.isfile(paths['word_magnitude'])
 #    assert os.path.isfile('train_df.csv')
-    # TODO: suppprt more dictionaries
-    if params.mode == 'build': 
+    if params.mode == 'train': 
         # TODO: if everythings works then maybe don't save the file or delete
         df_list = []
         for dict_fn in params.dict: 
-            #build_dataframe(dict_fn, paths)
             df_list.append(pd.read_csv(dict_fn + '-train_df.csv', sep='\t', index_col=[0]))
         all_dfs = pd.concat(df_list).reset_index().drop(columns=['index'])
         all_dfs.to_csv("all-train_df.csv", sep='\t')
         translations, features = extract_features(all_dfs)
-        filename = paths['data_dir'] + "/img_embeddings_resnet50-" + params.dict[0] + "-" + str(params.pid) + ".txt"
+        filename = paths['data_dir'] + "/img_embeddings_resnet50-dicts" + str(len(params.dict)) + .txt"
         print("Saving features to file: " + filename)
         with open(filename, 'a') as f:
             for word, arr in zip(translations,features):
                 f.write(word + "\t")
                 np.savetxt(f, arr.reshape(1,len(arr)), delimiter=' ')
         exit(0)
-    # TODO: Handle the different 
-    elif params.mode == 'merge': 
-        conc_files = {}
-        for dict_fn in params.dict:
-            files = [] 
-            tmp_file = paths['data_dir'] + "/full_img_embeddings_resnet50-" + dict_fn + ".txt"
-           for pid in range(params.workers):
-                curr_file = paths['data_dir'] + "/img_embeddings_resnet50-" + dict_fn + "-" + str(pid) + ".txt"
-                files.append(curr_file)
-            conc_files[tmp_file] = files
-        fn = paths['data_dir'] + "/full_img_embeddings_resnet50.txt"
-        magnitude_fn = paths['data_dir'] + "/full_img_embeddings.magnitude"
+    elif params.mode == 'build_df': 
+        df_list = []
+        for dict_fn in params.dict: 
+            build_dataframe(dict_fn, paths)
+    elif params.mode == 'magnitude': 
+        fn = paths['data_dir'] + "/full_embeddings_rn50_numbered.txt"
+        magnitude_fn = paths['data_dir'] + "/full_img_embeddings_rn50_numbered.magnitude"
         full_file = open(fn, 'w')
         words = Counter()
-        for temp, partial_files in conc_files.items():
-            full_dict_file = open(temp, 'w')
-            for filename in partial_files:
-                print(filename)
-                with open(filename, 'r') as file: 
-                    for line in file:
-                        word, emb = line.split('\t')
-                        if words[word] == 0: 
-                            full_dict_file.write(line)
-                            full_file.write(line)
-                            words[word] += 1
-                        else: 
-                            new_line = word + "_" + str(words[word]) + '\t' + emb
-                            full_dict_file.write(new_line)
-                            full_file.write(new_line)
-                            words[word] += 1
-                        
-            full_dict_file.close()
+        print("Writing to %s", fn)
+        with open(filename, 'r') as file: 
+            for line in file:
+                word, emb = line.split('\t')
+                if words[word] == 0: 
+                    full_file.write(line)
+                    words[word] += 1
+                else: 
+                    new_line = word + "_" + str(words[word]) + '\t' + emb
+                    full_file.write(new_line)
+                    words[word] += 1
         full_file.close()
         print("done writing new dictionaries")
         cmd = ("python -m pymagnitude.converter -i " + fn +  " -o "  + magnitude_fn).split()
@@ -167,7 +154,7 @@ if __name__ == '__main__':
         except: 
             raise Exception("There was an error running" + str(cmd))
     elif params.mode == 'eval':
-        magnitude_fn = paths['data_dir'] + "/full_img_embeddings.magnitude"
+        magnitude_fn = paths['data_dir'] + "/full_img_embeddings_rn50_numbered.magnitude"
         eval_set_dict = get_eval_set_dict(paths)
         embeddings = Magnitude(magnitude_fn)
         for eval_name, eval_set in eval_set_dict.items():
