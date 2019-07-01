@@ -36,7 +36,7 @@ def build_dataframe(dict_fn, paths, filter_mode = True):
             if filter_mode and english_translation not in word_magnitude: continue
             ends = ["01","02","03","04","05","06","07","08","09","10"]
             for img_num in ends:
-                path =   dict_fn + "/" + str(index) + "/" + img_num + ".jpg"
+                path = dict_fn + "/" + str(index) + "/" + img_num + ".jpg"
                 exists = os.path.isfile(paths['mmid_dir'] + "/" + path)
                 # check to see whether the path exist
                 if not exists: 
@@ -75,9 +75,7 @@ def train(train_df):
     learn.save(modelname)
     return learn, my_data
 
-def extract_features(learn, my_data=None, train_df=None):
-    if my_data == None: 
-        my_data = ImageDataBunch.from_df(paths['code_dir'], train_df, ds_tfms=get_transforms(), size=224, bs=params.bs, folder=paths['mmid_dir']).normalize(imagenet_stats) 
+def extract_features(learn, my_data):        
     sf = SaveFeatures(learn.model[1][5]) 
 
     _= learn.get_preds(my_data.train_ds)
@@ -130,7 +128,8 @@ if __name__ == '__main__':
         print("Inference on the following file" + params.train_df)
         learn = cnn_learner(data, models.resnet50).load(params.model_name)
         train_df = pd.read_csv(params.train_df) 
-        translations, features = extract_features(learn, None, train_df) 
+        my_data = ImageDataBunch.from_df(paths['code_dir'], train_df, ds_tfms=get_transforms(), size=224, bs=params.bs, folder=paths['mmid_dir']).normalize(imagenet_stats) 
+        translations, features = extract_features(learn, my_data) 
         filename = paths['data_dir'] + "/img_embeddings_rn50.txt"
         print("Saving features to file: " + filename)
         with open(filename, 'a') as f:
