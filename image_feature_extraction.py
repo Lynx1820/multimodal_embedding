@@ -126,9 +126,9 @@ if __name__ == '__main__':
     elif params.mode == 'inference':
         print("Using modelname: " + params.model_name)
         print("Inference on the following file" + params.train_df)
-        learn = cnn_learner(data, models.resnet50).load(params.model_name)
         train_df = pd.read_csv(params.train_df) 
         my_data = ImageDataBunch.from_df(paths['code_dir'], train_df, ds_tfms=get_transforms(), size=224, bs=params.bs, folder=paths['mmid_dir']).normalize(imagenet_stats) 
+        learn = cnn_learner(data, models.resnet50).load(params.model_name)
         translations, features = extract_features(learn, my_data) 
         filename = paths['data_dir'] + "/img_embeddings_rn50.txt"
         print("Saving features to file: " + filename)
