@@ -77,7 +77,6 @@ def train(train_df):
 
 def extract_features(learn, my_data):        
     sf = SaveFeatures(learn.model[1][5]) 
-
     _= learn.get_preds(my_data.train_ds)
     _= learn.get_preds(DatasetType.Valid)
     trans = [str(x) for x in (list(my_data.train_ds.y)+list(my_data.valid_ds.y))]
@@ -94,7 +93,8 @@ if __name__ == '__main__':
     parser.add_argument("--mode",choices=['train', 'eval', 'partition', 'magnitude', 'build_df', 'inference'], help="build_df: preprocess data and create embeddings, eval: evaluate embeddings")
     parser.add_argument("--train_epochs", type=int, default=8, help="number of epochs to train before extracting features") 
     parser.add_argument("--model_name", type=str, default="model_rn50", help="model name") 
-    parser.add_argument("--train_df", type=str, default=None, help="file for inteference")
+    parser.add_argument("--split_df", type=str, default=None, help="file to inference on")
+    parser.add_argument("--full_df", type=str, default=None, help="df model was originally trained on")
     #Model Paramaters
     parser.add_argument("--bs", type=int, default=64, help="batch size for training") 
     parser.add_argument("--lr", type=float, default=1e-2, help="learning rate") 
@@ -111,7 +111,7 @@ if __name__ == '__main__':
             assert os.path.isdir(paths['mmid_dir'] + "/" + dict_fn) 
         # TODO: if everythings works then maybe don't save the file or delete
         df_list = []
-        for dict_fn in params.dict: 
+        for dict_fn in params.dict:
             df_list.append(pd.read_csv(dict_fn + '-train_df.csv', sep='\t', index_col=[0]))
         all_dfs = pd.concat(df_list).reset_index().drop(columns=['index'])
         all_dfs.to_csv("all-train_df.csv", sep='\t')
@@ -125,12 +125,15 @@ if __name__ == '__main__':
         exit(0)
     elif params.mode == 'inference':
         print("Using modelname: " + params.model_name)
-        print("Inference on the following file" + params.train_df)
-        train_df = pd.read_csv(params.train_df) 
-        my_data = ImageDataBunch.from_df(paths['code_dir'], train_df, ds_tfms=get_transforms(), size=224, bs=params.bs, folder=paths['mmid_dir']).normalize(imagenet_stats) 
-        learn = cnn_learner(data, models.resnet50).load(params.model_name)
-        translations, features = extract_features(learn, my_data) 
-        filename = paths['data_dir'] + "/img_embeddings_rn50.txt"
+        print("Inference on the following file" + params.split_df)
+        train_df = pd.read_csv(params.split_df, sep='\t', index_col=[0])
+        full_train_df = pd.read_csv(params.full_df, sep='\t', index_col=[0])
+        print(train_df.head())
+        full_data = ImageDataBunch.from_df(paths['code_dir'], full_train_df, ds_tfms=get_transforms(), size=224, bs=params.bs, folder=paths['mmid_dir']).normalize(imagenet_stats)
+        split_data = ImageDataBunch.from_df(paths['code_dir'], train_df, ds_tfms=get_transforms(), size=224, bs=params.bs, folder=paths['mmid_dir']).normalize(imagenet_stats) 
+        learn = cnn_learner(full_data, models.resnet50).load(params.model_name)
+        translations, features = extract_features(learn, split_data) 
+        filename = paths['data_dir'] + "/img_embeddings-" + params.train_df[:-4] +  ".txt"
         print("Saving features to file: " + filename)
         with open(filename, 'a') as f:
             for word, arr in zip(translations,features):
