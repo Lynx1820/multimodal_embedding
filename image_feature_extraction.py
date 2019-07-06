@@ -75,12 +75,18 @@ def train(train_df):
     learn.save(modelname)
     return learn, my_data
 
-def extract_features(learn, my_data):        
-    sf = SaveFeatures(learn.model[1][5]) 
-    _= learn.get_preds(my_data.train_ds)
-    _= learn.get_preds(DatasetType.Valid)
-    trans = [str(x) for x in (list(my_data.train_ds.y)+list(my_data.valid_ds.y))]
-    return trans, sf.features
+def extract_features(learn, my_data):
+    trans = []
+    features = []
+    iter = 1000
+    for i in range(len(my_data.train_ds)):
+        if i % iter == 0:
+            print("Working on iteration:"  + str(i))
+        sf = SaveFeatures(learn.model[1][5]) 
+        _= learn.predict(my_data.train_ds[i][0])
+        trans.append(str(my_data.train_ds[i][1]))
+        features.append(sf.features[0])
+    return trans, np.array(features)
 
 
 if __name__ == '__main__': 
@@ -99,6 +105,7 @@ if __name__ == '__main__':
     parser.add_argument("--bs", type=int, default=64, help="batch size for training") 
     parser.add_argument("--lr", type=float, default=1e-2, help="learning rate") 
     params = parser.parse_args()
+    print("Parsing Arguments")
     # check params 
     assert os.path.isfile(params.config)
     config = configparser.ConfigParser()
@@ -127,13 +134,13 @@ if __name__ == '__main__':
         print("Using modelname: " + params.model_name)
         print("Inference on the following file" + params.split_df)
         train_df = pd.read_csv(params.split_df, sep='\t', index_col=[0])
-        full_train_df = pd.read_csv(params.full_df, sep='\t', index_col=[0])
-        print(train_df.head())
-        full_data = ImageDataBunch.from_df(paths['code_dir'], full_train_df, ds_tfms=get_transforms(), size=224, bs=params.bs, folder=paths['mmid_dir']).normalize(imagenet_stats)
-        split_data = ImageDataBunch.from_df(paths['code_dir'], train_df, ds_tfms=get_transforms(), size=224, bs=params.bs, folder=paths['mmid_dir']).normalize(imagenet_stats) 
-        learn = cnn_learner(full_data, models.resnet50).load(params.model_name)
+        train_df = np.array_split(train_df, 5)[params.pid].reset_index().drop(columns=['index'])
+        #print(train_df.head())
+        # split_data = ImageList.from_df(train_df,paths['code_dir'], folder=paths['mmid_dir'])
+        split_data = ImageDataBunch.from_df(paths['code_dir'], train_df, size=224, bs=params.bs, folder=paths['mmid_dir']).normalize(imagenet_stats)
+        learn = load_learner(paths['code_dir'])
         translations, features = extract_features(learn, split_data) 
-        filename = paths['data_dir'] + "/img_embeddings-" + params.train_df[:-4] +  ".txt"
+        filename = paths['data_dir'] + "/img_embeddings-" + params.split_df[:-4] + "-" + str(params.pid) + ".txt"
         print("Saving features to file: " + filename)
         with open(filename, 'a') as f:
             for word, arr in zip(translations,features):
