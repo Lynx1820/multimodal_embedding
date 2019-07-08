@@ -31,7 +31,23 @@ To evaluate the image embeddings we perform AverageMax between a pair of word's 
 To create create training data, you can run the command below. This part will create a dataset with word embeddings as the input features and their corresponding image embeddings. The files used are the image and magnitude files, and it will create file in your code directory with the words processed, and it will save the training data to the paths x_train and y_train specified config.ini
 ```python create_train_sets.py --config config_fastText_fastAI.ini ```
 ## Learning Mapping Regression 
-
+Before running the model, we separate the words processed into two sets for each evaluation benchmark, the ones presents in our image data (visual) and the ones not (zero-shot). 
+1. ```python process_eval_set.py config_fastText_fastAI.ini```
+To run a nueral model, where the default epochs is 25: 
+2a. ```python model.py neural -s modelname -c config_fastText_fastAI.ini```
+2b. ```python model.py linear -s modelname -e 175 -c config_fastText_fastAI.ini```
 ## Evaluation
+In this project we use six different benchmarks to evaluate the multimodal embeddings: Wordsim-rel/Wordsim-sim, MEN, Simlex999, and SemSim/VisSim. 
+
+```python evaluation.py normal modelname config_fastText_fastAI.ini```
+
+To evaluate word embeddings alone: 
+
+```python evaluation.py word_mode modelname config_fastText_fastAI.ini```
+
+To evaluate image embeddings alone: 
+
+```python evaluation.py img_mode modelname config_fastText_fastAI.ini```
+
 
 
